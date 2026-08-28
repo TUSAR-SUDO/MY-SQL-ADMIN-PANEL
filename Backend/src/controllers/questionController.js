@@ -413,6 +413,42 @@ const parseDocx = async (buffer, isMcq = false) => {
   });
 };
 
+// @desc    Get recent questions across all projects
+// @route   GET /api/questions/recent
+// @access  Private
+const getRecentQuestions = async (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 10, 50);
+  const questions = await prisma.question.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    include: {
+      project: {
+        select: { name: true, fieldLabelField1: true, fieldLabelField2: true, fieldLabelField3: true, projectType: true },
+      },
+    },
+  });
+  const result = questions.map((q) => ({
+    _id: q.id,
+    field1: q.field1,
+    field2: q.field2,
+    field3: q.field3,
+    optionA: q.optionA,
+    optionB: q.optionB,
+    optionC: q.optionC,
+    optionD: q.optionD,
+    correctAnswer: q.correctAnswer,
+    projectName: q.project?.name || 'Unknown',
+    projectType: q.project?.projectType || 'classic',
+    fieldLabels: {
+      field1: q.project?.fieldLabelField1 || 'Field 1',
+      field2: q.project?.fieldLabelField2 || 'Field 2',
+      field3: q.project?.fieldLabelField3 || 'Field 3',
+    },
+    createdAt: q.createdAt,
+  }));
+  res.json(result);
+};
+
 // @desc    Bulk delete questions
 // @route   POST /api/projects/:id/questions/bulk-delete
 // @access  Private
