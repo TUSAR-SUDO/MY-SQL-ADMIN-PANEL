@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface text-ink antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.025em;
+  }
+  /* Anyone who prefers less motion gets none of the ambient stuff. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* ---------- buttons ---------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-primary-600 text-white shadow-glow hover:bg-primary-700 hover:-translate-y-px focus-visible:ring-primary-500 active:translate-y-0 active:scale-[0.98];
+  }
+  .btn-secondary {
+    @apply btn bg-panel text-ink border border-line hover:border-primary-200 hover:bg-primary-50 focus-visible:ring-primary-300 active:scale-[0.98] shadow-sm;
+  }
+  .btn-ghost {
+    @apply btn text-muted hover:bg-primary-50 hover:text-primary-700 focus-visible:ring-primary-300;
+  }
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-400 active:scale-[0.98] shadow-sm;
+  }
+
+  /* ---------- forms ---------- */
+  .input {
+    @apply w-full rounded-xl border border-line bg-panel px-3.5 py-2.5 text-sm text-ink placeholder-muted/60 transition-all duration-200 focus:outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100;
+  }
+  .label {
+    @apply block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5;
+  }
+  .hint {
+    @apply mt-1.5 text-xs text-muted;
+  }
+
+  /* ---------- surfaces ---------- */
+  .card {
+    @apply bg-panel rounded-2xl border border-line shadow-card;
+  }
+  .panel-gradient {
+    @apply rounded-2xl border border-primary-100 bg-brand-soft;
+  }
+
+  /* ---------- tables ---------- */
+  .table-header {
+    @apply px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.08em] text-muted;
+  }
+  .table-cell {
+    @apply px-4 py-3.5 text-sm text-ink/90;
+  }
+
+  /* ---------- bits and pieces ---------- */
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+  .badge-primary {
+    @apply badge bg-primary-100 text-primary-700;
+  }
+  .badge-accent {
+    @apply badge bg-accent-100 text-accent-700;
+  }
+  .badge-neutral {
+    @apply badge bg-surface text-muted border border-line;
+  }
+  .chip-mono {
+    @apply inline-flex items-center rounded-lg bg-surface border border-line px-2 py-1 font-mono text-xs text-primary-700;
+  }
+  .eyebrow {
+    @apply text-[11px] font-bold uppercase tracking-[0.14em] text-primary-500;
+  }
+  .skeleton {
+    @apply animate-pulse rounded-lg bg-line;
+  }
+}
+
+/* Custom scrollbar — violet-tinted so it belongs to the palette. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ddd6fe;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #c4b5fd;
+  background-clip: content-box;
+}

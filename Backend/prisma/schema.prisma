@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("sub_admin")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Project {
+  id                Int        @id @default(autoincrement())
+  name              String
+  slug              String     @unique
+  projectType       String     @default("classic")
+  fieldLabelField1  String     @default("Field 1")
+  fieldLabelField2  String     @default("Field 2")
+  fieldLabelField3  String     @default("Field 3")
+  mainQuestionField String     @default("field2")
+  questionsPerQuiz  Int        @default(15)
+  allowedOrigins    Json       @default("[]")
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  questions         Question[]
+}
+
+model Question {
+  id            Int      @id @default(autoincrement())
+  projectId     Int
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  field1        String   @default("") @db.VarChar(2000)
+  field2        String   @default("") @db.VarChar(2000)
+  field3        String   @default("") @db.VarChar(2000)
+  optionA       String   @default("") @db.VarChar(2000)
+  optionB       String   @default("") @db.VarChar(2000)
+  optionC       String   @default("") @db.VarChar(2000)
+  optionD       String   @default("") @db.VarChar(2000)
+  correctAnswer String   @default("") @db.VarChar(10)
+  hint          String   @default("") @db.VarChar(2000)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+model Settings {
+  id                 Int      @id @default(autoincrement())
+  allowedGameOrigins Json     @default("[]")
+  publicApiBase      String   @default("")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}

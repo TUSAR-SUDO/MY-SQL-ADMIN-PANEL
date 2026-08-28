@@ -1,0 +1,15 @@
+{
+  "name": "gamecenter-admin-panel",
+  "version": "1.0.0",
+  "description": "GameCenter Admin Panel - Full Stack (Frontend + Backend)",
+  "private": true,
+  "scripts": {
+    "build": "npm install --prefix Backend && npm --prefix Backend run db:generate && npm install --prefix Frontend && npm run build --prefix Frontend",
+    "start": "node Backend/src/server.js",
+    "dev": "node Backend/src/server.js",
+    "install:all": "npm install --prefix Backend && npm install --prefix Frontend"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
