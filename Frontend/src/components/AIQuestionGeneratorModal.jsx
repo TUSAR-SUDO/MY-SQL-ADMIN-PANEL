@@ -79,30 +79,30 @@ export default function AIQuestionGeneratorModal({ isOpen, onClose, project, onQ
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md animate-fade-in">
-      <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-indigo-500/30 bg-slate-900 text-slate-100 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-fade-in">
+      <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-[#3A3530] bg-[#191716] text-[#FAF8F5] shadow-2xl">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-[#2C2926] bg-gradient-to-r from-[#1D1B19] via-[#2A2622] to-[#1D1B19] px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-glow">
               <Sparkles size={20} className="text-white animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-heading text-base font-bold text-white">AI Question Bank Generator</h3>
-                <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-[10px] font-bold text-indigo-300">
+                <h3 className="font-heading text-base font-bold text-white tracking-tight">AI Question Bank Generator</h3>
+                <span className="rounded-full bg-primary-500/20 px-2 py-0.5 text-[10px] font-bold text-primary-300 border border-primary-500/30">
                   Powered by Gemini AI
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
-                Generating for: <strong className="text-slate-200">{project.name}</strong> ({isMcq ? 'MCQ Quiz' : 'Classic'})
+              <p className="text-xs text-[#A8A196]">
+                Generating for: <strong className="text-[#FAF8F5]">{project.name}</strong> ({isMcq ? 'MCQ Quiz' : 'Classic'})
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            className="rounded-xl p-2 text-[#A8A196] hover:bg-white/10 hover:text-white transition-colors"
           >
             <X size={18} />
           </button>
@@ -112,8 +112,8 @@ export default function AIQuestionGeneratorModal({ isOpen, onClose, project, onQ
         <form onSubmit={handleGenerate} className="flex-1 overflow-y-auto p-6 space-y-5">
           {/* Quick Preset Ideas */}
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-              <Lightbulb size={13} className="text-amber-400" />
+            <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#A8A196] mb-2">
+              <Lightbulb size={13} className="text-accent-400" />
               <span>Quick Prompt Ideas</span>
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -122,7 +122,7 @@ export default function AIQuestionGeneratorModal({ isOpen, onClose, project, onQ
                   key={p.label}
                   type="button"
                   onClick={() => setPrompt(p.prompt)}
-                  className="rounded-lg border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-xs font-medium text-slate-300 hover:border-indigo-500 hover:bg-indigo-950/40 hover:text-indigo-200 transition-all"
+                  className="rounded-lg border border-[#35312C] bg-[#24211E] px-2.5 py-1 text-xs font-medium text-[#D5CEC5] hover:border-primary-500/60 hover:bg-primary-500/10 hover:text-white transition-all"
                 >
                   {p.label}
                 </button>
@@ -132,7 +132,7 @@ export default function AIQuestionGeneratorModal({ isOpen, onClose, project, onQ
 
           {/* Topic / Prompt Input */}
           <div>
-            <label className="label text-xs font-bold uppercase text-slate-300">
+            <label className="label text-xs font-bold uppercase text-[#D5CEC5]">
               Topic, Concept, or Instructions
             </label>
             <textarea
@@ -145,7 +145,7 @@ export default function AIQuestionGeneratorModal({ isOpen, onClose, project, onQ
                   ? 'e.g. 2024 IPL final match records, highest run scorers, and iconic catches with educational hints'
                   : 'e.g. Advanced vocabulary words about emotions and psychology with clear definitions and hints'
               }
-              className="input text-xs resize-none bg-slate-800/80 border-slate-700 text-slate-100 focus:border-indigo-500"
+              className="input text-xs resize-none bg-[#24211E] border-[#35312C] text-[#FAF8F5] focus:border-primary-500"
             />
           </div>
 
@@ -153,11 +153,11 @@ export default function AIQuestionGeneratorModal({ isOpen, onClose, project, onQ
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {/* Number of questions */}
             <div>
-              <label className="label text-xs font-semibold text-slate-300">Number of Questions</label>
+              <label className="label text-xs font-semibold text-[#D5CEC5]">Number of Questions</label>
               <select
                 value={count}
                 onChange={(e) => setCount(Number(e.target.value))}
-                className="input text-xs bg-slate-800 border-slate-700 text-slate-200"
+                className="input text-xs bg-[#24211E] border-[#35312C] text-[#FAF8F5]"
               >
                 <option value={5}>5 Questions</option>
                 <option value={10}>10 Questions</option>
@@ -168,11 +168,11 @@ export default function AIQuestionGeneratorModal({ isOpen, onClose, project, onQ
 
             {/* Difficulty */}
             <div>
-              <label className="label text-xs font-semibold text-slate-300">Difficulty Level</label>
+              <label className="label text-xs font-semibold text-[#D5CEC5]">Difficulty Level</label>
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className="input text-xs bg-slate-800 border-slate-700 text-slate-200"
+                className="input text-xs bg-[#24211E] border-[#35312C] text-[#FAF8F5]"
               >
                 <option value="easy">🟢 Easy</option>
                 <option value="medium">🟡 Medium</option>
@@ -182,28 +182,28 @@ export default function AIQuestionGeneratorModal({ isOpen, onClose, project, onQ
 
             {/* Category / Sub-topic */}
             <div>
-              <label className="label text-xs font-semibold text-slate-300">Category Tag (Optional)</label>
+              <label className="label text-xs font-semibold text-[#D5CEC5]">Category Tag (Optional)</label>
               <input
                 type="text"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 placeholder="e.g. IPL, WorldCup"
-                className="input text-xs bg-slate-800 border-slate-700 text-slate-200"
+                className="input text-xs bg-[#24211E] border-[#35312C] text-[#FAF8F5]"
               />
             </div>
           </div>
 
           {/* Optional Gemini API Key Bar */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-800/40 p-3.5">
+          <div className="rounded-2xl border border-[#35312C] bg-[#24211E]/70 p-3.5">
             <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-                <Key size={13} className="text-indigo-400" />
+              <span className="flex items-center gap-1.5 text-[#A8A196] font-medium">
+                <Key size={13} className="text-primary-400" />
                 <span>Gemini API Key</span>
               </span>
               <button
                 type="button"
                 onClick={() => setShowKeyInput(!showKeyInput)}
-                className="text-indigo-400 hover:text-indigo-300 underline text-xs"
+                className="text-primary-400 hover:text-primary-300 underline text-xs font-medium"
               >
                 {showKeyInput ? 'Hide Key' : apiKey ? 'Change Key' : 'Enter API Key'}
               </button>
@@ -216,15 +216,15 @@ export default function AIQuestionGeneratorModal({ isOpen, onClose, project, onQ
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="Paste your Google Gemini API Key (starts with AIzaSy...)"
-                  className="input text-xs bg-slate-900 border-slate-700 text-slate-200"
+                  className="input text-xs bg-[#191716] border-[#35312C] text-[#FAF8F5]"
                 />
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-[#A8A196]">
                   Get a free API key at{' '}
                   <a
                     href="https://aistudio.google.com/app/apikey"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-indigo-400 hover:underline"
+                    className="text-primary-400 hover:underline"
                   >
                     aistudio.google.com/app/apikey
                   </a>
@@ -235,18 +235,18 @@ export default function AIQuestionGeneratorModal({ isOpen, onClose, project, onQ
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2C2926]">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-colors"
+              className="rounded-xl border border-[#35312C] bg-[#24211E] px-4 py-2 text-xs font-semibold text-[#D5CEC5] hover:bg-[#2F2C28] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={generating}
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 px-6 py-2 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 hover:scale-105 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-primary-500 hover:bg-primary-600 px-6 py-2 text-xs font-bold text-white shadow-glow hover:scale-105 transition-all disabled:opacity-50"
             >
               {generating ? (
                 <>

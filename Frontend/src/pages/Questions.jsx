@@ -48,11 +48,11 @@ import {
 const difficultyBadge = (difficulty = 'medium') => {
   switch (difficulty.toLowerCase()) {
     case 'easy':
-      return <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">🟢 Easy</span>;
+      return <span className="inline-flex items-center gap-1 rounded-md bg-[#4A7C59]/15 px-2 py-0.5 text-[10px] font-bold text-[#4A7C59] dark:text-[#78B48B] border border-[#4A7C59]/30">🟢 Easy</span>;
     case 'hard':
-      return <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 text-[10px] font-bold text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60">🔴 Hard</span>;
+      return <span className="inline-flex items-center gap-1 rounded-md bg-[#C94A4A]/15 px-2 py-0.5 text-[10px] font-bold text-[#C94A4A] dark:text-[#E87A7A] border border-[#C94A4A]/30">🔴 Hard</span>;
     default:
-      return <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">🟡 Medium</span>;
+      return <span className="inline-flex items-center gap-1 rounded-md bg-[#D99B43]/15 px-2 py-0.5 text-[10px] font-bold text-[#B87A28] dark:text-[#F3BE65] border border-[#D99B43]/30">🟡 Medium</span>;
   }
 };
 
@@ -643,9 +643,9 @@ export default function Questions() {
           {/* AI Generator Button */}
           <button
             onClick={() => setAiModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-indigo-500/25 hover:scale-105 transition-all"
+            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary-600 via-primary-500 to-accent-600 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-primary-500/25 hover:scale-105 transition-all"
           >
-            <Sparkles size={14} className="text-amber-300 animate-pulse" />
+            <Sparkles size={14} className="text-amber-200 animate-pulse" />
             <span>AI Generator</span>
           </button>
 
@@ -668,7 +668,7 @@ export default function Questions() {
               title="Export to JSON"
               className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-ink hover:bg-panel transition-colors"
             >
-              <FileJson size={13} className="text-amber-500" />
+              <FileJson size={13} className="text-[#D99B43]" />
               <span>JSON</span>
             </button>
             <span className="text-line">|</span>
@@ -677,7 +677,7 @@ export default function Questions() {
               title="Export to CSV"
               className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-ink hover:bg-panel transition-colors"
             >
-              <FileSpreadsheet size={13} className="text-emerald-500" />
+              <FileSpreadsheet size={13} className="text-[#4A7C59]" />
               <span>CSV</span>
             </button>
           </div>
@@ -698,19 +698,19 @@ export default function Questions() {
       <div
         className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border p-4 text-xs ${
           total === 0
-            ? 'border-rose-300 dark:border-rose-900/50 bg-rose-50/70 dark:bg-rose-950/20 text-rose-900 dark:text-rose-200'
+            ? 'border-[#C94A4A]/30 bg-[#C94A4A]/10 text-[#C94A4A] dark:text-[#E87A7A]'
             : isReady
-            ? 'border-emerald-300 dark:border-emerald-900/50 bg-emerald-50/70 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-200'
-            : 'border-amber-300 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200'
+            ? 'border-[#4A7C59]/30 bg-[#4A7C59]/10 text-[#4A7C59] dark:text-[#78B48B]'
+            : 'border-[#D99B43]/30 bg-[#D99B43]/10 text-[#B87A28] dark:text-[#F3BE65]'
         }`}
       >
         <div className="flex items-center gap-3">
           {total === 0 ? (
-            <AlertTriangle size={18} className="text-rose-500 shrink-0" />
+            <AlertTriangle size={18} className="text-[#C94A4A] shrink-0" />
           ) : isReady ? (
-            <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
+            <CheckCircle2 size={18} className="text-[#4A7C59] shrink-0" />
           ) : (
-            <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+            <AlertTriangle size={18} className="text-[#D99B43] shrink-0" />
           )}
           <div>
             <p className="font-bold">
@@ -733,9 +733,9 @@ export default function Questions() {
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setAiModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-primary-600 px-3.5 py-1.5 font-bold text-white shadow-sm hover:bg-primary-700 transition-all hover:scale-105"
+            className="flex items-center gap-1.5 rounded-xl bg-primary-500 px-3.5 py-1.5 font-bold text-white shadow-sm hover:bg-primary-600 transition-all hover:scale-105"
           >
-            <Sparkles size={13} className="text-amber-300" />
+            <Sparkles size={13} className="text-amber-200" />
             <span>Generate with AI</span>
           </button>
           {total < poolRequired && (

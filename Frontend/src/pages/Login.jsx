@@ -82,39 +82,39 @@ const Login = () => {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
-      {/* Pitch side — says what the panel is for, in the product's own words. */}
-      <aside className="relative hidden overflow-hidden bg-[#0d0a1d] border-r border-[#221c44] p-12 lg:flex lg:flex-col lg:justify-between">
-        <div className="pointer-events-none absolute -top-32 -left-24 h-96 w-96 rounded-full bg-primary-600/40 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-40 -right-20 h-96 w-96 rounded-full bg-accent-500/25 blur-3xl" />
+      {/* Pitch side — Anthropic warm stone style */}
+      <aside className="relative hidden overflow-hidden bg-[#141211] border-r border-[#272522] p-12 lg:flex lg:flex-col lg:justify-between">
+        <div className="pointer-events-none absolute -top-32 -left-24 h-96 w-96 rounded-full bg-primary-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-40 -right-20 h-96 w-96 rounded-full bg-accent-500/10 blur-3xl" />
 
         <div className="relative flex items-center gap-3">
           <div className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-gradient text-white shadow-glow">
             <Gamepad2 size={22} />
           </div>
-          <p className="font-heading text-lg font-bold text-white">GameCenter</p>
+          <p className="font-heading text-lg font-bold text-white tracking-tight">GameCenter</p>
         </div>
 
         <div className="relative max-w-md">
-          <p className="eyebrow text-accent-300">Question bank</p>
+          <p className="eyebrow text-accent-400">Question Bank & Multi-Game Engine</p>
           <h2 className="mt-3 font-heading text-4xl font-extrabold leading-[1.1] text-white">
-            Write the questions here.
+            Curate questions here.
             <br />
             <span className="bg-gradient-to-r from-primary-300 to-accent-300 bg-clip-text text-transparent">
-              Your game reads them live.
+              Your games stream them live.
             </span>
           </h2>
-          <p className="mt-4 text-sm leading-relaxed text-primary-200">
+          <p className="mt-4 text-sm leading-relaxed text-[#D5CEC5]">
             Every project gets a public endpoint. Point your game at it and it pulls a fresh,
             shuffled set of questions on each session — no redeploy, no hardcoded arrays.
           </p>
           <div className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10">
             <Plug size={15} className="text-accent-300" />
-            <code className="font-mono text-xs text-primary-100">/api/public/projects/&lt;slug&gt;/session</code>
+            <code className="font-mono text-xs text-primary-200">/api/public/projects/&lt;slug&gt;/session</code>
           </div>
         </div>
 
-        <p className="relative text-xs text-primary-300/70">
-          Manage projects, question banks and admin accounts in one place.
+        <p className="relative text-xs text-[#A8A196]">
+          Manage projects, question banks and admin accounts in one unified panel.
         </p>
       </aside>
 

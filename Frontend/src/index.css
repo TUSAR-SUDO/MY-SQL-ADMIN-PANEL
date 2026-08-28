@@ -3,19 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --color-surface: #F8F9FD;
+  --color-surface: #FAF8F5;
   --color-panel: #FFFFFF;
-  --color-ink: #0F172A;
-  --color-muted: #64748B;
-  --color-line: #E2E8F0;
+  --color-ink: #191716;
+  --color-muted: #78716C;
+  --color-line: #E6E1D8;
 }
 
 .dark {
-  --color-surface: #090717;
-  --color-panel: #13102b;
-  --color-ink: #F8FAFC;
-  --color-muted: #94A3B8;
-  --color-line: #241e47;
+  --color-surface: #141312;
+  --color-panel: #1D1C1A;
+  --color-ink: #FAF8F5;
+  --color-muted: #9E988F;
+  --color-line: #2B2A27;
 }
 
 @layer base {
@@ -25,7 +25,7 @@
   h1,
   h2,
   h3 {
-    font-family: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
     letter-spacing: -0.025em;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -45,16 +45,16 @@
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-primary {
-    @apply btn bg-primary-600 text-white shadow-glow hover:bg-primary-700 hover:-translate-y-px focus-visible:ring-primary-500 active:translate-y-0 active:scale-[0.98];
+    @apply btn bg-primary-500 text-white shadow-glow hover:bg-primary-600 hover:-translate-y-px focus-visible:ring-primary-400 active:translate-y-0 active:scale-[0.98];
   }
   .btn-secondary {
-    @apply btn bg-panel text-ink border border-line hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 dark:hover:text-primary-300 dark:hover:border-primary-700/60 focus-visible:ring-primary-400 active:scale-[0.98] shadow-sm;
+    @apply btn bg-panel text-ink border border-line hover:border-primary-400 hover:bg-primary-50/60 dark:hover:bg-primary-950/40 dark:hover:text-primary-300 dark:hover:border-primary-700/60 focus-visible:ring-primary-400 active:scale-[0.98] shadow-sm;
   }
   .btn-ghost {
-    @apply btn text-muted hover:bg-primary-50 dark:hover:bg-primary-950/40 hover:text-primary-700 dark:hover:text-primary-300 focus-visible:ring-primary-400;
+    @apply btn text-muted hover:bg-primary-50/60 dark:hover:bg-primary-950/40 hover:text-primary-600 dark:hover:text-primary-300 focus-visible:ring-primary-400;
   }
   .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-400 active:scale-[0.98] shadow-sm;
+    @apply btn bg-[#C94A4A] text-white hover:bg-[#B43F3F] focus-visible:ring-red-400 active:scale-[0.98] shadow-sm;
   }
 
   /* ---------- forms ---------- */
@@ -92,7 +92,7 @@
     @apply badge bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800/60;
   }
   .badge-accent {
-    @apply badge bg-accent-100 dark:bg-accent-950/60 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-800/60;
+    @apply badge bg-accent-100 dark:bg-accent-950/60 text-accent-800 dark:text-accent-300 border border-accent-200 dark:border-accent-800/60;
   }
   .badge-neutral {
     @apply badge bg-surface text-muted border border-line;
@@ -110,22 +110,22 @@
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c4b5fd;
+  background: #DCB697;
   border-radius: 999px;
-  border: 3px solid transparent;
+  border: 2px solid transparent;
   background-clip: content-box;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #4c1d95;
+  background: #622B1D;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #a78bfa;
+  background: #CE926B;
   background-clip: content-box;
 }

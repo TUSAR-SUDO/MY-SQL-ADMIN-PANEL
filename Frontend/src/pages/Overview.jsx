@@ -131,7 +131,7 @@ export default function Overview() {
       value: stats.projects,
       desc: 'Active educational games',
       icon: FolderKanban,
-      gradient: 'from-indigo-500 to-purple-600',
+      gradient: 'from-[#C15C3D] to-[#973C24]',
       glow: 'group-hover:shadow-glow',
     },
     {
@@ -139,7 +139,7 @@ export default function Overview() {
       value: stats.questions,
       desc: 'Stored in MySQL database',
       icon: HelpCircle,
-      gradient: 'from-emerald-500 to-teal-600',
+      gradient: 'from-[#4A7C59] to-[#365A40]',
       glow: 'group-hover:shadow-glow-emerald',
     },
     {
@@ -147,22 +147,22 @@ export default function Overview() {
       value: stats.admins,
       desc: 'Super admins & managers',
       icon: Users,
-      gradient: 'from-amber-500 to-orange-600',
-      glow: 'group-hover:shadow-glow-amber',
+      gradient: 'from-[#D99B43] to-[#A36C22]',
+      glow: 'group-hover:shadow-glow-accent',
     },
   ];
 
   return (
     <div className="space-y-8">
       {/* Hero Welcome Header */}
-      <div className="relative overflow-hidden rounded-3xl border border-line dark:border-primary-500/20 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 text-white shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl border border-[#3D3730] bg-gradient-to-br from-[#1C1A18] via-[#292420] to-[#1C1A18] p-6 text-white shadow-2xl">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="flex h-6 items-center rounded-full bg-indigo-500/30 px-2.5 text-[11px] font-bold text-indigo-300">
+              <span className="flex h-6 items-center rounded-full bg-primary-500/20 px-2.5 text-[11px] font-bold text-primary-300 border border-primary-500/30">
                 MySQL Admin Hub
               </span>
-              <span className="flex items-center gap-1.5 text-xs text-slate-300">
+              <span className="flex items-center gap-1.5 text-xs text-[#D5CEC5]">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
@@ -173,7 +173,7 @@ export default function Overview() {
             <h1 className="font-heading text-2xl md:text-3xl font-extrabold tracking-tight text-white">
               Welcome back, {admin?.name || 'Admin'}
             </h1>
-            <p className="text-xs md:text-sm text-slate-300 max-w-xl">
+            <p className="text-xs md:text-sm text-[#D5CEC5] max-w-xl">
               Manage multi-game schemas, curate randomized question pools, and connect client game frontends via high-speed API endpoints.
             </p>
           </div>
@@ -183,7 +183,7 @@ export default function Overview() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/projects')}
-              className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-slate-900 shadow-md transition-colors hover:bg-slate-100"
+              className="flex items-center gap-2 rounded-xl bg-[#FAF8F5] px-4 py-2.5 text-xs font-bold text-[#191716] shadow-md transition-colors hover:bg-[#F3EFEA]"
             >
               <Plus size={15} />
               <span>New Game</span>
@@ -193,7 +193,7 @@ export default function Overview() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSimulatorTarget(projects[0])}
-                className="flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary-500/30 transition-colors hover:bg-primary-500"
+                className="flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary-500/30 transition-colors hover:bg-primary-600"
               >
                 <Play size={14} className="fill-white" />
                 <span>Play Test First Game</span>
@@ -202,8 +202,8 @@ export default function Overview() {
           </div>
         </div>
 
-        {/* Decorative background glow */}
-        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary-500/20 blur-3xl" />
+        {/* Decorative background warm glow */}
+        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary-500/15 blur-3xl" />
       </div>
 
       {loadError && (
@@ -326,10 +326,10 @@ export default function Overview() {
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
                           count === 0
-                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                            ? 'bg-[#C94A4A]/15 text-[#C94A4A] dark:text-[#E87A7A] border border-[#C94A4A]/30'
                             : isReady
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                            ? 'bg-[#4A7C59]/15 text-[#4A7C59] dark:text-[#78B48B] border border-[#4A7C59]/30'
+                            : 'bg-[#D99B43]/15 text-[#B87A28] dark:text-[#F3BE65] border border-[#D99B43]/30'
                         }`}
                       >
                         {count === 0 ? 'Empty' : isReady ? '✅ Ready' : '⚠️ Low Pool'}
@@ -387,7 +387,7 @@ export default function Overview() {
                   </div>
                   <p className="mt-1 text-xs font-medium text-ink line-clamp-2">{q.field1 || '—'}</p>
                   {q.correctAnswer && (
-                    <span className="mt-1.5 inline-block text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded px-1.5 py-0.5">
+                    <span className="mt-1.5 inline-block text-[10px] font-bold text-[#4A7C59] dark:text-[#78B48B] bg-[#4A7C59]/15 border border-[#4A7C59]/30 rounded px-1.5 py-0.5">
                       Answer: {q.correctAnswer}
                     </span>
                   )}

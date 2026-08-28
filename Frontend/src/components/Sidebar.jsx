@@ -29,11 +29,11 @@ const Sidebar = ({ collapsed, onToggle, onNavigate }) => {
     <motion.aside
       animate={{ width: collapsed ? 76 : 248 }}
       transition={{ duration: 0.22, ease: 'easeInOut' }}
-      className="h-screen bg-[#0d0a1d] border-r border-[#221c44] flex flex-col fixed left-0 top-0 z-40 overflow-hidden shadow-2xl"
+      className="h-screen bg-[#141211] border-r border-[#272522] flex flex-col fixed left-0 top-0 z-40 overflow-hidden shadow-2xl"
     >
-      {/* Ambient glow — the only decoration in here. */}
-      <div className="pointer-events-none absolute -top-24 -left-16 h-56 w-56 rounded-full bg-primary-600/30 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 -right-20 h-56 w-56 rounded-full bg-accent-500/20 blur-3xl" />
+      {/* Ambient warm clay glow */}
+      <div className="pointer-events-none absolute -top-24 -left-16 h-56 w-56 rounded-full bg-primary-500/15 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 -right-20 h-56 w-56 rounded-full bg-accent-500/10 blur-3xl" />
 
       <div className="relative flex items-center gap-3 px-4 h-16">
         <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-gradient text-white shadow-glow">
@@ -41,14 +41,14 @@ const Sidebar = ({ collapsed, onToggle, onNavigate }) => {
         </div>
         {!collapsed && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-w-0 flex-1">
-            <p className="font-heading font-bold text-white leading-tight">GameCenter</p>
-            <p className="text-[11px] uppercase tracking-[0.14em] text-primary-300">Admin</p>
+            <p className="font-heading font-bold text-white leading-tight tracking-tight">GameCenter</p>
+            <p className="text-[11px] uppercase tracking-[0.14em] text-primary-300">Admin Hub</p>
           </motion.div>
         )}
         <button
           onClick={onToggle}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="rounded-lg p-1.5 text-primary-300 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
+          className="rounded-lg p-1.5 text-primary-200 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
         >
           <ChevronLeft
             size={16}
@@ -67,7 +67,7 @@ const Sidebar = ({ collapsed, onToggle, onNavigate }) => {
             title={collapsed ? item.label : undefined}
             className={({ isActive }) =>
               `relative group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 ${
-                isActive ? 'text-white' : 'text-slate-300/80 hover:text-white'
+                isActive ? 'text-white' : 'text-[#C7C0B7] hover:text-white hover:bg-white/[0.04]'
               }`
             }
           >
@@ -103,7 +103,7 @@ const Sidebar = ({ collapsed, onToggle, onNavigate }) => {
         <button
           onClick={logout}
           title={collapsed ? 'Sign out' : undefined}
-          className={`mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-primary-200/80 transition-colors hover:bg-red-500/20 hover:text-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 ${
+          className={`mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#C7C0B7] transition-colors hover:bg-red-500/15 hover:text-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 ${
             collapsed ? 'justify-center px-0' : ''
           }`}
         >

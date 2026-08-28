@@ -43,9 +43,9 @@ const Layout = () => {
 
   return (
     <div className="relative min-h-screen bg-surface overflow-x-hidden">
-      {/* Subtle ambient lighting orbs in background */}
-      <div className="pointer-events-none fixed top-0 right-1/4 h-96 w-96 rounded-full bg-primary-600/10 dark:bg-primary-600/15 blur-[120px] animate-pulse-slow -z-10" />
-      <div className="pointer-events-none fixed bottom-10 right-10 h-96 w-96 rounded-full bg-accent-500/10 dark:bg-accent-500/10 blur-[130px] -z-10" />
+      {/* Subtle Anthropic warm ambient lighting */}
+      <div className="pointer-events-none fixed top-0 right-1/4 h-96 w-96 rounded-full bg-primary-500/[0.08] dark:bg-primary-500/[0.07] blur-[140px] animate-pulse-slow -z-10" />
+      <div className="pointer-events-none fixed bottom-10 right-10 h-96 w-96 rounded-full bg-accent-500/[0.06] dark:bg-accent-500/[0.05] blur-[150px] -z-10" />
 
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} onNavigate={handleNavClick} />
       <div className="transition-[margin] duration-200" style={{ marginLeft: collapsed ? 76 : 248 }}>
