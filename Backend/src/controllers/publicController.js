@@ -59,14 +59,6 @@ const getSession = async (req, res) => {
   const { slug } = req.params;
   const { difficulty, category } = req.query;
 
-  const requestedLimit = Number(req.query.limit) || 15;
-  const cacheKey = `session_${slug.toLowerCase()}_${difficulty || 'all'}_${category || 'all'}_${requestedLimit}`;
-  const cached = sessionCache.get(cacheKey);
-  if (cached) {
-    res.setHeader('X-Cache', 'HIT');
-    return res.json(cached);
-  }
-
   const project = await prisma.project.findUnique({ where: { slug } });
   if (!project) {
     return res.status(404).json({ message: 'Project not found' });
@@ -74,6 +66,13 @@ const getSession = async (req, res) => {
 
   const requestedLimit = Number(req.query.limit) || project.questionsPerQuiz || 15;
   const limit = Math.min(Math.max(1, requestedLimit), 100);
+
+  const cacheKey = `session_${slug.toLowerCase()}_${difficulty || 'all'}_${category || 'all'}_${limit}`;
+  const cached = sessionCache.get(cacheKey);
+  if (cached) {
+    res.setHeader('X-Cache', 'HIT');
+    return res.json(cached);
+  }
 
   const isMcq = project.projectType === 'mcq';
 
