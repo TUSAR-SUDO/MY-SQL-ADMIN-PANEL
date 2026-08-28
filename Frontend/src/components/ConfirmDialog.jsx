@@ -30,7 +30,7 @@ const ConfirmDialog = ({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
         >
-          <div className="absolute inset-0 bg-ink/50 backdrop-blur-sm" onClick={loading ? undefined : onClose} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={loading ? undefined : onClose} />
           <motion.div
             role="alertdialog"
             aria-modal="true"
@@ -41,7 +41,7 @@ const ConfirmDialog = ({
             transition={{ duration: 0.2, ease: 'easeOut' }}
           >
             <div className="flex items-start gap-4">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-red-50 text-red-600">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500">
                 <AlertTriangle size={22} />
               </div>
               <div className="flex-1">

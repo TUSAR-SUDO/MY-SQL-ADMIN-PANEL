@@ -46,6 +46,41 @@ const getProjectEmoji = (name = '') => {
   return '🎮';
 };
 
+const AnimatedCounter = ({ value, duration = 0.8 }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    const end = parseInt(value, 10);
+    if (isNaN(end)) {
+      setDisplayValue(value);
+      return;
+    }
+    if (end === 0) {
+      setDisplayValue(0);
+      return;
+    }
+
+    const totalFrames = Math.round(duration * 60);
+    let frame = 0;
+
+    const counter = setInterval(() => {
+      frame++;
+      const progress = frame / totalFrames;
+      const current = Math.round(end * (1 - Math.pow(2, -10 * progress)));
+      setDisplayValue(Math.min(current, end));
+
+      if (frame === totalFrames) {
+        clearInterval(counter);
+        setDisplayValue(end);
+      }
+    }, 1000 / 60);
+
+    return () => clearInterval(counter);
+  }, [value, duration]);
+
+  return <span>{displayValue}</span>;
+};
+
 export default function Overview() {
   const { admin } = useAuth();
   const navigate = useNavigate();
@@ -97,7 +132,7 @@ export default function Overview() {
       desc: 'Active educational games',
       icon: FolderKanban,
       gradient: 'from-indigo-500 to-purple-600',
-      bgGlow: 'bg-indigo-500/10',
+      glow: 'group-hover:shadow-glow',
     },
     {
       label: 'Question Bank',
@@ -105,7 +140,7 @@ export default function Overview() {
       desc: 'Stored in MySQL database',
       icon: HelpCircle,
       gradient: 'from-emerald-500 to-teal-600',
-      bgGlow: 'bg-emerald-500/10',
+      glow: 'group-hover:shadow-glow-emerald',
     },
     {
       label: 'Admin Accounts',
@@ -113,22 +148,26 @@ export default function Overview() {
       desc: 'Super admins & managers',
       icon: Users,
       gradient: 'from-amber-500 to-orange-600',
-      bgGlow: 'bg-amber-500/10',
+      glow: 'group-hover:shadow-glow-amber',
     },
   ];
 
   return (
     <div className="space-y-8">
       {/* Hero Welcome Header */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl border border-line dark:border-primary-500/20 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 text-white shadow-2xl">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <span className="flex h-6 items-center rounded-full bg-indigo-500/30 px-2.5 text-[11px] font-bold text-indigo-300">
                 MySQL Admin Hub
               </span>
-              <span className="flex items-center gap-1 text-xs text-slate-400">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" /> Live Database Connected
+              <span className="flex items-center gap-1.5 text-xs text-slate-300">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                Live Database Connected
               </span>
             </div>
             <h1 className="font-heading text-2xl md:text-3xl font-extrabold tracking-tight text-white">
@@ -140,35 +179,39 @@ export default function Overview() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/projects')}
-              className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-slate-900 shadow-md transition-all hover:bg-slate-100 hover:scale-105"
+              className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-slate-900 shadow-md transition-colors hover:bg-slate-100"
             >
               <Plus size={15} />
               <span>New Game</span>
-            </button>
+            </motion.button>
             {projects.length > 0 && (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setSimulatorTarget(projects[0])}
-                className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-500/30 transition-all hover:bg-indigo-500 hover:scale-105"
+                className="flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-primary-500/30 transition-colors hover:bg-primary-500"
               >
                 <Play size={14} className="fill-white" />
                 <span>Play Test First Game</span>
-              </button>
+              </motion.button>
             )}
           </div>
         </div>
 
         {/* Decorative background glow */}
-        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary-500/20 blur-3xl" />
       </div>
 
       {loadError && (
-        <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+        <div className="flex items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-red-400">
           <AlertTriangle size={18} className="mt-0.5 shrink-0 text-red-500" />
           <div>
-            <p className="text-sm font-semibold text-red-800">Dashboard status error</p>
-            <p className="text-sm text-red-700">{loadError}</p>
+            <p className="text-sm font-semibold">Dashboard status error</p>
+            <p className="text-sm opacity-90">{loadError}</p>
           </div>
         </div>
       )}
@@ -178,21 +221,22 @@ export default function Overview() {
         {cards.map((card, idx) => (
           <motion.div
             key={card.label}
-            initial={{ opacity: 0, y: 14 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: idx * 0.08 }}
-            className="card relative overflow-hidden p-5 border-slate-200/80 hover:shadow-lg transition-all"
+            whileHover={{ y: -6, scale: 1.02 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 25, delay: idx * 0.08 }}
+            className={`card group relative overflow-hidden p-5 cursor-default transition-all duration-300 ${card.glow}`}
           >
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{card.label}</p>
-                <h3 className="mt-2 font-heading text-3xl font-extrabold text-slate-900">
-                  {loading ? '—' : card.value}
+                <p className="text-xs font-bold uppercase tracking-wider text-muted">{card.label}</p>
+                <h3 className="mt-2 font-heading text-3xl font-extrabold text-ink tracking-tight">
+                  {loading ? '—' : <AnimatedCounter value={card.value} />}
                 </h3>
-                <p className="mt-1 text-xs text-slate-400">{card.desc}</p>
+                <p className="mt-1 text-xs text-muted">{card.desc}</p>
               </div>
               <div
-                className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${card.gradient} text-white shadow-md`}
+                className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${card.gradient} text-white shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
               >
                 <card.icon size={22} />
               </div>
@@ -207,12 +251,12 @@ export default function Overview() {
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-heading text-base font-bold text-slate-900">Game Project Health</h2>
-              <p className="text-xs text-slate-500">Live question pools and endpoint readiness</p>
+              <h2 className="font-heading text-base font-bold text-ink">Game Project Health</h2>
+              <p className="text-xs text-muted">Live question pools and endpoint readiness</p>
             </div>
             <Link
               to="/projects"
-              className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700"
+              className="inline-flex items-center gap-1 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline"
             >
               <span>View all games</span>
               <ArrowRight size={13} />
@@ -222,14 +266,14 @@ export default function Overview() {
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="card h-20 animate-pulse bg-slate-100/70" />
+                <div key={i} className="card h-20 skeleton" />
               ))}
             </div>
           ) : projects.length === 0 ? (
             <div className="card flex flex-col items-center justify-center p-8 text-center">
-              <Gamepad2 size={36} className="text-slate-300" />
-              <p className="mt-2 text-sm font-bold text-slate-800">No games created yet</p>
-              <p className="text-xs text-slate-500 max-w-xs mt-0.5">
+              <Gamepad2 size={36} className="text-muted" />
+              <p className="mt-2 text-sm font-bold text-ink">No games created yet</p>
+              <p className="text-xs text-muted max-w-xs mt-0.5">
                 Create a project (like Cricket Trivia or Vocab) to start building questions.
               </p>
               <button onClick={() => navigate('/projects')} className="btn-primary mt-4 text-xs">
@@ -238,34 +282,40 @@ export default function Overview() {
             </div>
           ) : (
             <div className="space-y-3">
-              {projects.slice(0, 4).map((p) => {
+              {projects.slice(0, 4).map((p, idx) => {
                 const count = p.questionCount || 0;
                 const req = p.questionsPerQuiz || 15;
                 const isReady = count >= req;
                 const isMcq = p.projectType === 'mcq';
 
                 return (
-                  <div
+                  <motion.div
                     key={p._id}
-                    className="card flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border-slate-200/80 hover:border-indigo-300 hover:shadow-md transition-all"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{ scale: 1.01, x: 2 }}
+                    transition={{ duration: 0.2, delay: idx * 0.05 }}
+                    className="card flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 hover:border-primary-400/80 hover:shadow-card-hover transition-all"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-xl shadow-inner">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface border border-line text-xl shadow-inner transition-transform duration-200 hover:rotate-6">
                         {getProjectEmoji(p.name)}
                       </span>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-slate-900 truncate">{p.name}</h4>
+                          <h4 className="font-bold text-sm text-ink truncate">{p.name}</h4>
                           <span
                             className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase ${
-                              isMcq ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700'
+                              isMcq
+                                ? 'bg-primary-500/15 text-primary-400 border border-primary-500/30'
+                                : 'bg-surface text-muted border border-line'
                             }`}
                           >
                             {isMcq ? 'MCQ' : 'Classic'}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
-                          <code>{p.slug}</code>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted">
+                          <code className="font-mono text-primary-600 dark:text-primary-300">{p.slug}</code>
                           <span>•</span>
                           <span>{count} / {req} per quiz</span>
                         </div>
@@ -276,10 +326,10 @@ export default function Overview() {
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
                           count === 0
-                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
                             : isReady
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
                         }`}
                       >
                         {count === 0 ? 'Empty' : isReady ? '✅ Ready' : '⚠️ Low Pool'}
@@ -287,20 +337,20 @@ export default function Overview() {
 
                       <button
                         onClick={() => setSimulatorTarget(p)}
-                        className="flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-colors"
+                        className="flex items-center gap-1 rounded-lg border border-primary-500/30 bg-primary-500/10 px-2.5 py-1 text-xs font-bold text-primary-600 dark:text-primary-300 hover:bg-primary-500/20 active:scale-95 transition-all"
                       >
-                        <Play size={11} className="fill-indigo-700" />
+                        <Play size={11} className="fill-primary-600 dark:fill-primary-300" />
                         <span>Play</span>
                       </button>
 
                       <button
                         onClick={() => navigate(`/projects/${p._id}/questions`)}
-                        className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                        className="btn-secondary px-2.5 py-1 text-xs"
                       >
                         Manage
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -311,30 +361,37 @@ export default function Overview() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-heading text-base font-bold text-slate-900">Recent Questions</h2>
-              <p className="text-xs text-slate-500">Latest additions to question pool</p>
+              <h2 className="font-heading text-base font-bold text-ink">Recent Questions</h2>
+              <p className="text-xs text-muted">Latest additions to question pool</p>
             </div>
           </div>
 
           {loading ? (
-            <div className="card h-64 animate-pulse bg-slate-100/70" />
+            <div className="card h-64 skeleton" />
           ) : recentQuestions.length === 0 ? (
-            <div className="card p-6 text-center text-xs text-slate-400">No questions added yet.</div>
+            <div className="card p-6 text-center text-xs text-muted">No questions added yet.</div>
           ) : (
-            <div className="card divide-y divide-slate-100 p-0 overflow-hidden border-slate-200/80">
-              {recentQuestions.map((q) => (
-                <div key={q._id} className="p-3.5 hover:bg-slate-50/70 transition-colors">
-                  <div className="flex items-center justify-between text-[11px] text-slate-400">
-                    <span className="font-semibold text-indigo-600">{q.projectName}</span>
+            <div className="card divide-y divide-line p-0 overflow-hidden">
+              {recentQuestions.map((q, idx) => (
+                <motion.div
+                  key={q._id}
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  whileHover={{ x: 3 }}
+                  transition={{ duration: 0.2, delay: idx * 0.04 }}
+                  className="p-3.5 hover:bg-surface/60 transition-colors"
+                >
+                  <div className="flex items-center justify-between text-[11px] text-muted">
+                    <span className="font-semibold text-primary-600 dark:text-primary-400">{q.projectName}</span>
                     <span>{timeAgo(q.createdAt)}</span>
                   </div>
-                  <p className="mt-1 text-xs font-medium text-slate-800 line-clamp-2">{q.field1 || '—'}</p>
+                  <p className="mt-1 text-xs font-medium text-ink line-clamp-2">{q.field1 || '—'}</p>
                   {q.correctAnswer && (
-                    <span className="mt-1.5 inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 rounded px-1.5 py-0.5">
+                    <span className="mt-1.5 inline-block text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded px-1.5 py-0.5">
                       Answer: {q.correctAnswer}
                     </span>
                   )}
-                </div>
+                </motion.div>
               ))}
             </div>
           )}

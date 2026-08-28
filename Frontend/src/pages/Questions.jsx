@@ -48,11 +48,11 @@ import {
 const difficultyBadge = (difficulty = 'medium') => {
   switch (difficulty.toLowerCase()) {
     case 'easy':
-      return <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">🟢 Easy</span>;
+      return <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">🟢 Easy</span>;
     case 'hard':
-      return <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-200">🔴 Hard</span>;
+      return <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 text-[10px] font-bold text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60">🔴 Hard</span>;
     default:
-      return <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">🟡 Medium</span>;
+      return <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60">🟡 Medium</span>;
   }
 };
 
@@ -518,17 +518,17 @@ export default function Questions() {
             render: (r) => (
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold text-slate-900">{r.field1 || '—'}</p>
+                  <p className="font-semibold text-ink">{r.field1 || '—'}</p>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   {difficultyBadge(r.difficulty)}
                   {r.category && (
-                    <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+                    <span className="inline-flex items-center gap-1 rounded bg-surface border border-line px-1.5 py-0.5 text-[10px] font-semibold text-muted">
                       <Tag size={10} /> {r.category}
                     </span>
                   )}
                   {r.hint && (
-                    <span className="flex items-center gap-1 text-[11px] text-amber-700">
+                    <span className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
                       <span className="font-medium">💡 Hint:</span> {r.hint}
                     </span>
                   )}
@@ -568,11 +568,11 @@ export default function Questions() {
             label: labels.field1,
             render: (r) => (
               <div>
-                <p className="font-semibold text-slate-900">{r.field1 || '—'}</p>
+                <p className="font-semibold text-ink">{r.field1 || '—'}</p>
                 <div className="mt-1 flex items-center gap-2">
                   {difficultyBadge(r.difficulty)}
                   {r.category && (
-                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+                    <span className="rounded bg-surface border border-line px-1.5 py-0.5 text-[10px] font-semibold text-muted">
                       #{r.category}
                     </span>
                   )}
@@ -580,8 +580,8 @@ export default function Questions() {
               </div>
             ),
           },
-          { key: 'field2', label: labels.field2, render: (r) => <span className="text-slate-600">{r.field2 || '—'}</span> },
-          { key: 'field3', label: labels.field3, render: (r) => <span className="text-slate-500">{r.field3 || '—'}</span> },
+          { key: 'field2', label: labels.field2, render: (r) => <span className="text-ink/80">{r.field2 || '—'}</span> },
+          { key: 'field3', label: labels.field3, render: (r) => <span className="text-muted">{r.field3 || '—'}</span> },
         ]),
     {
       key: 'actions',
@@ -590,14 +590,14 @@ export default function Questions() {
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => openEdit(r)}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors"
+            className="rounded-lg p-1.5 text-muted hover:bg-surface hover:text-primary-500 transition-colors"
             title="Edit"
           >
             <Pencil size={15} />
           </button>
           <button
             onClick={() => setDeleteTarget(r)}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+            className="rounded-lg p-1.5 text-muted hover:bg-red-500/10 hover:text-red-500 transition-colors"
             title="Delete"
           >
             <Trash2 size={15} />

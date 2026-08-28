@@ -346,16 +346,16 @@ export default function Projects() {
         loading ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="card h-48 animate-pulse bg-slate-100/80" />
+              <div key={i} className="card h-48 skeleton" />
             ))}
           </div>
         ) : filteredProjects.length === 0 ? (
           <div className="card flex flex-col items-center justify-center p-12 text-center">
-            <Gamepad2 size={40} className="text-slate-300" />
-            <h3 className="mt-3 font-heading text-base font-bold text-slate-800">
+            <Gamepad2 size={40} className="text-muted" />
+            <h3 className="mt-3 font-heading text-base font-bold text-ink">
               {search ? 'No matching games found' : 'No game projects yet'}
             </h3>
-            <p className="mt-1 max-w-sm text-xs text-slate-500">
+            <p className="mt-1 max-w-sm text-xs text-muted">
               Create your first game project to start managing questions and connecting clients.
             </p>
             <button onClick={openAdd} className="btn-primary mt-4 text-xs">
@@ -376,7 +376,7 @@ export default function Projects() {
                   layout
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="card group relative flex flex-col justify-between overflow-hidden border-slate-200/80 p-5 transition-all hover:border-indigo-300 hover:shadow-xl"
+                  className="card group relative flex flex-col justify-between overflow-hidden p-5 transition-all hover:border-primary-400 hover:shadow-xl"
                 >
                   {/* Top Info */}
                   <div>
@@ -395,7 +395,7 @@ export default function Projects() {
 
                       <span
                         className={`rounded-lg px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${
-                          isMcq ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300' : 'bg-surface text-muted border border-line'
+                          isMcq ? 'bg-primary-500/15 text-primary-400 border border-primary-500/30' : 'bg-surface text-muted border border-line'
                         }`}
                       >
                         {isMcq ? 'MCQ' : 'Classic'}
@@ -561,11 +561,11 @@ export default function Projects() {
           </div>
 
           {form.projectType === 'classic' && (
-            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-600">Custom Field Labels</p>
+            <div className="space-y-3 rounded-xl border border-line bg-surface/60 p-3.5">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted">Custom Field Labels</p>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-600">Field 1</label>
+                  <label className="text-[11px] font-semibold text-muted">Field 1</label>
                   <input
                     value={form.field1}
                     onChange={(e) => setForm({ ...form, field1: e.target.value })}
@@ -573,7 +573,7 @@ export default function Projects() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-600">Field 2</label>
+                  <label className="text-[11px] font-semibold text-muted">Field 2</label>
                   <input
                     value={form.field2}
                     onChange={(e) => setForm({ ...form, field2: e.target.value })}
@@ -581,7 +581,7 @@ export default function Projects() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-600">Field 3</label>
+                  <label className="text-[11px] font-semibold text-muted">Field 3</label>
                   <input
                     value={form.field3}
                     onChange={(e) => setForm({ ...form, field3: e.target.value })}

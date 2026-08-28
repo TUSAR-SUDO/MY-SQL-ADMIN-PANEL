@@ -381,28 +381,28 @@ export default function ConnectGame({ project, onProjectUpdate }) {
   };
 
   const resultTone = {
-    ok: 'border-emerald-200 bg-emerald-50 text-emerald-900',
-    empty: 'border-amber-200 bg-amber-50 text-amber-900',
-    failed: 'border-red-200 bg-red-50 text-red-900',
+    ok: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    empty: 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    failed: 'border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400',
   }[test.state];
 
   return (
     <div className="space-y-6">
       {/* Live Play-Testing Hero Card */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-transparent p-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-primary-500/30 bg-gradient-to-r from-primary-500/10 via-accent-500/10 to-transparent p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 shadow-md shadow-indigo-500/20">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-accent-600 shadow-md shadow-primary-500/20">
             <Sparkles size={22} className="text-white" />
           </div>
           <div>
-            <h4 className="font-heading text-sm font-bold text-slate-900">Interactive Game Simulator</h4>
-            <p className="text-xs text-slate-600">Test how your questions look and play in real-time before deploying.</p>
+            <h4 className="font-heading text-sm font-bold text-ink">Interactive Game Simulator</h4>
+            <p className="text-xs text-muted">Test how your questions look and play in real-time before deploying.</p>
           </div>
         </div>
         <button
           type="button"
           onClick={() => setSimulatorOpen(true)}
-          className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-600/30 transition-all hover:bg-indigo-700 hover:scale-105"
+          className="btn-primary text-xs"
         >
           <Play size={14} className="fill-white" />
           <span>Launch Simulator</span>
@@ -412,12 +412,12 @@ export default function ConnectGame({ project, onProjectUpdate }) {
       {/* Endpoint URL & Diagnostics */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Session Endpoint</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Session Endpoint</p>
           <span className="badge-neutral text-xs">Serves {project.questionsPerQuiz} random questions</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <code className="chip-mono flex-1 truncate px-3 py-2 text-xs font-medium text-slate-800">
+          <code className="chip-mono flex-1 truncate px-3 py-2 text-xs font-medium text-ink">
             {endpointUrl}
           </code>
           <CopyButton id="endpoint" value={endpointUrl} copiedKey={copiedKey} onCopy={copy} label="Copy Endpoint" />
@@ -456,24 +456,24 @@ export default function ConnectGame({ project, onProjectUpdate }) {
       </section>
 
       {/* Allowed Game Origins (CORS) */}
-      <section className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/50 p-4">
+      <section className="space-y-3 rounded-2xl border border-line bg-surface/50 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-700">Authorized Game URLs (CORS)</p>
-            <p className="text-xs text-slate-500">Allow your deployed games (like Vercel or Netlify) to call this API.</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-ink">Authorized Game URLs (CORS)</p>
+            <p className="text-xs text-muted">Allow your deployed games (like Vercel or Netlify) to call this API.</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Globe size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
             <input
               type="text"
               placeholder="e.g. https://cricket-nine-phi.vercel.app"
               value={gameUrl}
               onChange={(e) => setGameUrl(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addGameOrigin()}
-              className="input-field pl-9 text-xs"
+              className="input pl-9 text-xs"
             />
           </div>
           <button
@@ -492,7 +492,7 @@ export default function ConnectGame({ project, onProjectUpdate }) {
             {project.allowedOrigins.map((origin) => (
               <span
                 key={origin}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 {origin}
@@ -500,7 +500,7 @@ export default function ConnectGame({ project, onProjectUpdate }) {
                   type="button"
                   onClick={() => removeOrigin(origin)}
                   title="Revoke access"
-                  className="rounded p-0.5 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-900"
+                  className="rounded p-0.5 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300"
                 >
                   <X size={12} />
                 </button>
@@ -508,14 +508,14 @@ export default function ConnectGame({ project, onProjectUpdate }) {
             ))}
           </div>
         ) : (
-          <p className="text-xs text-slate-400 italic">No specific URLs restricted — falls back to global settings.</p>
+          <p className="text-xs text-muted italic">No specific URLs restricted — falls back to global settings.</p>
         )}
       </section>
 
       {/* Multi-Framework Code Generator */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Integration Code Snippet</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Integration Code Snippet</p>
           <CopyButton
             id="snippet"
             value={generateSnippet(selectedFramework, project, apiBase)}
@@ -526,7 +526,7 @@ export default function ConnectGame({ project, onProjectUpdate }) {
         </div>
 
         {/* Framework Selector Tabs */}
-        <div className="flex flex-wrap gap-1.5 border-b border-slate-200 pb-2">
+        <div className="flex flex-wrap gap-1.5 border-b border-line pb-2">
           {frameworks.map((fw) => (
             <button
               key={fw.id}
@@ -534,8 +534,8 @@ export default function ConnectGame({ project, onProjectUpdate }) {
               onClick={() => setSelectedFramework(fw.id)}
               className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
                 selectedFramework === fw.id
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-primary-600 text-white shadow-glow'
+                  : 'border border-line bg-surface text-muted hover:text-ink hover:bg-panel'
               }`}
             >
               <fw.icon size={13} />
@@ -545,7 +545,7 @@ export default function ConnectGame({ project, onProjectUpdate }) {
         </div>
 
         {/* Code Box */}
-        <pre className="max-h-64 overflow-x-auto rounded-2xl bg-slate-950 p-4 font-mono text-xs leading-relaxed text-indigo-200 border border-slate-800">
+        <pre className="max-h-64 overflow-x-auto rounded-2xl bg-[#090717] p-4 font-mono text-xs leading-relaxed text-indigo-200 border border-line">
           <code>{generateSnippet(selectedFramework, project, apiBase)}</code>
         </pre>
       </section>

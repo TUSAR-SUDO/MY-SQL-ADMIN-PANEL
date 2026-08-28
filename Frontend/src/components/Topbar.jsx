@@ -1,4 +1,5 @@
-import { Menu, Sun, Moon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, Sun, Moon, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -12,7 +13,7 @@ const Topbar = ({ title, subtitle, eyebrow, onToggleSidebar }) => {
   const { isDark, toggleTheme } = useTheme();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-line bg-panel/80 px-4 backdrop-blur-md sm:px-6 transition-colors duration-300">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-line bg-panel/75 px-4 backdrop-blur-xl sm:px-6 transition-colors duration-300">
       <div className="flex min-w-0 items-center gap-3">
         <button
           onClick={onToggleSidebar}
@@ -24,7 +25,7 @@ const Topbar = ({ title, subtitle, eyebrow, onToggleSidebar }) => {
         <div className="min-w-0">
           {eyebrow && <p className="eyebrow">{eyebrow}</p>}
           <div className="flex min-w-0 items-baseline gap-2">
-            <h1 className="truncate text-lg font-bold text-ink">{title}</h1>
+            <h1 className="truncate text-lg font-bold text-ink tracking-tight">{title}</h1>
             {subtitle && (
               <span className="hidden truncate text-sm text-muted lg:inline">— {subtitle}</span>
             )}
@@ -33,27 +34,42 @@ const Topbar = ({ title, subtitle, eyebrow, onToggleSidebar }) => {
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Theme Toggle Button */}
-        <button
+        {/* Animated Theme Toggle Button */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.05 }}
           onClick={toggleTheme}
           title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-surface text-ink hover:border-primary-400 hover:text-primary-500 transition-all shadow-sm"
+          className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-surface text-ink hover:border-primary-400 hover:shadow-glow transition-all"
           aria-label="Toggle theme"
         >
-          {isDark ? (
-            <Sun size={17} className="text-amber-400 animate-fade-in" />
-          ) : (
-            <Moon size={17} className="text-indigo-600 animate-fade-in" />
-          )}
-        </button>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={isDark ? 'dark' : 'light'}
+              initial={{ y: -10, opacity: 0, rotate: -45 }}
+              animate={{ y: 0, opacity: 1, rotate: 0 }}
+              exit={{ y: 10, opacity: 0, rotate: 45 }}
+              transition={{ duration: 0.2 }}
+            >
+              {isDark ? (
+                <Sun size={17} className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+              ) : (
+                <Moon size={17} className="text-primary-600 drop-shadow-[0_0_8px_rgba(124,58,237,0.4)]" />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </motion.button>
 
         <div className="hidden text-right sm:block">
           <p className="text-sm font-semibold text-ink">{admin?.name || 'Admin'}</p>
           <p className="text-xs text-muted">{roleLabels[admin?.role] || admin?.email || ''}</p>
         </div>
-        <div className="grid h-9 w-9 place-items-center rounded-full bg-brand-gradient text-sm font-bold text-white shadow-glow">
+        <motion.div
+          whileHover={{ scale: 1.08 }}
+          className="grid h-9 w-9 place-items-center rounded-full bg-brand-gradient text-sm font-bold text-white shadow-glow cursor-default"
+        >
           {admin?.name?.[0]?.toUpperCase() || 'A'}
-        </div>
+        </motion.div>
       </div>
     </header>
   );

@@ -500,9 +500,11 @@ export default function GameSimulatorModal({ isOpen, onClose, project, onProject
                             }
 
                             return (
-                              <button
+                              <motion.button
                                 key={opt.key}
                                 disabled={hasAnswered}
+                                whileHover={!hasAnswered ? { scale: 1.02, x: 4 } : {}}
+                                whileTap={!hasAnswered ? { scale: 0.98 } : {}}
                                 onClick={() => handleSelectOption(opt.key)}
                                 className={`flex items-center gap-3 rounded-xl border p-4 text-left font-medium transition-all ${btnStyle}`}
                               >
@@ -519,12 +521,16 @@ export default function GameSimulatorModal({ isOpen, onClose, project, onProject
                                 </span>
                                 <span className="flex-1 text-sm">{opt.text}</span>
                                 {hasAnswered && isCorrect && (
-                                  <CheckCircle2 size={18} className="shrink-0 text-emerald-400" />
+                                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                                    <CheckCircle2 size={18} className="shrink-0 text-emerald-400" />
+                                  </motion.div>
                                 )}
                                 {hasAnswered && isSelected && !isCorrect && (
-                                  <XCircle size={18} className="shrink-0 text-rose-400" />
+                                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                                    <XCircle size={18} className="shrink-0 text-rose-400" />
+                                  </motion.div>
                                 )}
-                              </button>
+                              </motion.button>
                             );
                           })}
                       </div>

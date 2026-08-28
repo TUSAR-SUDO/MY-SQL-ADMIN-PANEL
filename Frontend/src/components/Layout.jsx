@@ -42,7 +42,11 @@ const Layout = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="relative min-h-screen bg-surface overflow-x-hidden">
+      {/* Subtle ambient lighting orbs in background */}
+      <div className="pointer-events-none fixed top-0 right-1/4 h-96 w-96 rounded-full bg-primary-600/10 dark:bg-primary-600/15 blur-[120px] animate-pulse-slow -z-10" />
+      <div className="pointer-events-none fixed bottom-10 right-10 h-96 w-96 rounded-full bg-accent-500/10 dark:bg-accent-500/10 blur-[130px] -z-10" />
+
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} onNavigate={handleNavClick} />
       <div className="transition-[margin] duration-200" style={{ marginLeft: collapsed ? 76 : 248 }}>
         <Topbar
@@ -53,9 +57,10 @@ const Layout = () => {
         />
         <motion.main
           key={location.pathname}
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
           className="mx-auto max-w-7xl p-4 sm:p-6"
         >
           <Outlet />

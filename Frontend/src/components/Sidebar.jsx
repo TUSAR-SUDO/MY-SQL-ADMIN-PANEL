@@ -29,7 +29,7 @@ const Sidebar = ({ collapsed, onToggle, onNavigate }) => {
     <motion.aside
       animate={{ width: collapsed ? 76 : 248 }}
       transition={{ duration: 0.22, ease: 'easeInOut' }}
-      className="h-screen bg-ink flex flex-col fixed left-0 top-0 z-40 overflow-hidden"
+      className="h-screen bg-[#0d0a1d] border-r border-[#221c44] flex flex-col fixed left-0 top-0 z-40 overflow-hidden shadow-2xl"
     >
       {/* Ambient glow — the only decoration in here. */}
       <div className="pointer-events-none absolute -top-24 -left-16 h-56 w-56 rounded-full bg-primary-600/30 blur-3xl" />
@@ -57,7 +57,7 @@ const Sidebar = ({ collapsed, onToggle, onNavigate }) => {
         </button>
       </div>
 
-      <nav className="relative flex-1 space-y-1 overflow-y-auto px-3 py-4">
+      <nav className="relative flex-1 space-y-1.5 overflow-y-auto px-3 py-4">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -66,15 +66,24 @@ const Sidebar = ({ collapsed, onToggle, onNavigate }) => {
             onClick={onNavigate}
             title={collapsed ? item.label : undefined}
             className={({ isActive }) =>
-              `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 ${
-                isActive
-                  ? 'bg-primary-600 text-white shadow-glow'
-                  : 'text-primary-200/80 hover:bg-white/10 hover:text-white'
+              `relative group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 ${
+                isActive ? 'text-white' : 'text-slate-300/80 hover:text-white'
               }`
             }
           >
-            <item.icon size={18} className="shrink-0" />
-            {!collapsed && <span className="truncate">{item.label}</span>}
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <motion.div
+                    layoutId="sidebarActivePill"
+                    className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 shadow-glow"
+                    transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                  />
+                )}
+                <item.icon size={18} className="relative z-10 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                {!collapsed && <span className="relative z-10 truncate">{item.label}</span>}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>

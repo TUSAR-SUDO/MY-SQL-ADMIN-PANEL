@@ -3,19 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --color-surface: #F7F6FC;
+  --color-surface: #F8F9FD;
   --color-panel: #FFFFFF;
-  --color-ink: #1B1830;
-  --color-muted: #6B6784;
-  --color-line: #EAE7F5;
+  --color-ink: #0F172A;
+  --color-muted: #64748B;
+  --color-line: #E2E8F0;
 }
 
 .dark {
-  --color-surface: #0c0a17;
-  --color-panel: #161327;
-  --color-ink: #F5F3FF;
-  --color-muted: #9E9BB5;
-  --color-line: #292448;
+  --color-surface: #090717;
+  --color-panel: #13102b;
+  --color-ink: #F8FAFC;
+  --color-muted: #94A3B8;
+  --color-line: #241e47;
 }
 
 @layer base {
@@ -48,10 +48,10 @@
     @apply btn bg-primary-600 text-white shadow-glow hover:bg-primary-700 hover:-translate-y-px focus-visible:ring-primary-500 active:translate-y-0 active:scale-[0.98];
   }
   .btn-secondary {
-    @apply btn bg-panel text-ink border border-line hover:border-primary-300 hover:bg-primary-50 focus-visible:ring-primary-300 active:scale-[0.98] shadow-sm;
+    @apply btn bg-panel text-ink border border-line hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 dark:hover:text-primary-300 dark:hover:border-primary-700/60 focus-visible:ring-primary-400 active:scale-[0.98] shadow-sm;
   }
   .btn-ghost {
-    @apply btn text-muted hover:bg-primary-50 hover:text-primary-700 focus-visible:ring-primary-300;
+    @apply btn text-muted hover:bg-primary-50 dark:hover:bg-primary-950/40 hover:text-primary-700 dark:hover:text-primary-300 focus-visible:ring-primary-400;
   }
   .btn-danger {
     @apply btn bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-400 active:scale-[0.98] shadow-sm;
@@ -59,7 +59,7 @@
 
   /* ---------- forms ---------- */
   .input {
-    @apply w-full rounded-xl border border-line bg-panel px-3.5 py-2.5 text-sm text-ink placeholder-muted transition-all duration-200 focus:outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100;
+    @apply w-full rounded-xl border border-line bg-panel px-3.5 py-2.5 text-sm text-ink placeholder-muted transition-all duration-200 focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/15;
   }
   .label {
     @apply block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5;
@@ -73,7 +73,7 @@
     @apply bg-panel rounded-2xl border border-line shadow-card transition-colors duration-300;
   }
   .panel-gradient {
-    @apply rounded-2xl border border-primary-100 bg-brand-soft;
+    @apply rounded-2xl border border-primary-100 dark:border-primary-900/40 bg-brand-soft dark:bg-gradient-to-br dark:from-primary-950/50 dark:to-accent-950/30;
   }
 
   /* ---------- tables ---------- */
@@ -89,22 +89,22 @@
     @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold;
   }
   .badge-primary {
-    @apply badge bg-primary-100 text-primary-700;
+    @apply badge bg-primary-100 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800/60;
   }
   .badge-accent {
-    @apply badge bg-accent-100 text-accent-700;
+    @apply badge bg-accent-100 dark:bg-accent-950/60 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-800/60;
   }
   .badge-neutral {
     @apply badge bg-surface text-muted border border-line;
   }
   .chip-mono {
-    @apply inline-flex items-center rounded-lg bg-surface border border-line px-2 py-1 font-mono text-xs text-primary-700;
+    @apply inline-flex items-center rounded-lg bg-surface border border-line px-2 py-1 font-mono text-xs text-primary-700 dark:text-primary-300;
   }
   .eyebrow {
-    @apply text-[11px] font-bold uppercase tracking-[0.14em] text-primary-500;
+    @apply text-[11px] font-bold uppercase tracking-[0.14em] text-primary-600 dark:text-primary-400;
   }
   .skeleton {
-    @apply animate-pulse rounded-lg bg-line;
+    @apply animate-pulse rounded-lg bg-line opacity-60;
   }
 }
 

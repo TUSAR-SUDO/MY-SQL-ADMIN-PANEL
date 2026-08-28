@@ -30,7 +30,7 @@ const Modal = ({ isOpen, onClose, title, description, children, size = 'md' }) =
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
         >
-          <div className="absolute inset-0 bg-ink/50 backdrop-blur-sm" onClick={onClose} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
           <motion.div
             role="dialog"
             aria-modal="true"

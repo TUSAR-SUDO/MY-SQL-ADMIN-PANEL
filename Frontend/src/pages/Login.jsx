@@ -83,7 +83,7 @@ const Login = () => {
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
       {/* Pitch side — says what the panel is for, in the product's own words. */}
-      <aside className="relative hidden overflow-hidden bg-ink p-12 lg:flex lg:flex-col lg:justify-between">
+      <aside className="relative hidden overflow-hidden bg-[#0d0a1d] border-r border-[#221c44] p-12 lg:flex lg:flex-col lg:justify-between">
         <div className="pointer-events-none absolute -top-32 -left-24 h-96 w-96 rounded-full bg-primary-600/40 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-40 -right-20 h-96 w-96 rounded-full bg-accent-500/25 blur-3xl" />
 
@@ -149,7 +149,7 @@ const Login = () => {
               {formError && (
                 <div
                   role="alert"
-                  className="mt-5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700"
+                  className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400"
                 >
                   {formError}
                 </div>
