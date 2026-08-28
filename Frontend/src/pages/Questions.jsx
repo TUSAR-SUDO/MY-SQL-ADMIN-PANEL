@@ -23,6 +23,9 @@ import {
   CheckSquare,
   Square,
   RefreshCw,
+  Flame,
+  Tag,
+  Filter,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DataTable from '../components/DataTable';
@@ -30,6 +33,7 @@ import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ConnectGame from '../components/ConnectGame';
 import GameSimulatorModal from '../components/GameSimulatorModal';
+import AIQuestionGeneratorModal from '../components/AIQuestionGeneratorModal';
 import {
   getProject,
   getQuestions,
@@ -41,6 +45,17 @@ import {
   seedSampleQuestions,
 } from '../api';
 
+const difficultyBadge = (difficulty = 'medium') => {
+  switch (difficulty.toLowerCase()) {
+    case 'easy':
+      return <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">🟢 Easy</span>;
+    case 'hard':
+      return <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-200">🔴 Hard</span>;
+    default:
+      return <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">🟡 Medium</span>;
+  }
+};
+
 export default function Questions() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -49,11 +64,25 @@ export default function Questions() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [difficultyFilter, setDifficultyFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [aiModalOpen, setAiModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ field1: '', field2: '', field3: '', optionA: '', optionB: '', optionC: '', optionD: '', correctAnswer: '', hint: '' });
+  const [form, setForm] = useState({
+    field1: '',
+    field2: '',
+    field3: '',
+    optionA: '',
+    optionB: '',
+    optionC: '',
+    optionD: '',
+    correctAnswer: '',
+    hint: '',
+    difficulty: 'medium',
+    category: '',
+  });
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -81,7 +110,7 @@ export default function Questions() {
     try {
       const [projectRes, questionsRes] = await Promise.all([
         getProject(id),
-        getQuestions(id, { search, page, limit: 10 }),
+        getQuestions(id, { search, page, limit: 10, difficulty: difficultyFilter }),
       ]);
       setProject(projectRes.data);
       setQuestions(questionsRes.data.questions || []);
@@ -97,7 +126,7 @@ export default function Questions() {
     } finally {
       setLoading(false);
     }
-  }, [id, search, page]);
+  }, [id, search, page, difficultyFilter]);
 
   useEffect(() => {
     load();
@@ -120,7 +149,19 @@ export default function Questions() {
 
   const openAdd = () => {
     setEditing(null);
-    setForm({ field1: '', field2: '', field3: '', optionA: '', optionB: '', optionC: '', optionD: '', correctAnswer: '', hint: '' });
+    setForm({
+      field1: '',
+      field2: '',
+      field3: '',
+      optionA: '',
+      optionB: '',
+      optionC: '',
+      optionD: '',
+      correctAnswer: '',
+      hint: '',
+      difficulty: 'medium',
+      category: '',
+    });
     setModalOpen(true);
   };
 
@@ -136,6 +177,8 @@ export default function Questions() {
       optionD: q.optionD || '',
       correctAnswer: q.correctAnswer || '',
       hint: q.hint || q.field3 || '',
+      difficulty: q.difficulty || 'medium',
+      category: q.category || '',
     });
     setModalOpen(true);
   };
@@ -242,7 +285,7 @@ export default function Questions() {
       let csvContent = '';
 
       if (isMcq) {
-        csvContent = 'Question,Option A,Option B,Option C,Option D,Correct Answer,Hint\n';
+        csvContent = 'Question,Option A,Option B,Option C,Option D,Correct Answer,Hint,Difficulty,Category\n';
         items.forEach((q) => {
           const row = [
             `"${(q.field1 || '').replace(/"/g, '""')}"`,
@@ -252,16 +295,20 @@ export default function Questions() {
             `"${(q.optionD || '').replace(/"/g, '""')}"`,
             `"${q.correctAnswer || ''}"`,
             `"${(q.hint || '').replace(/"/g, '""')}"`,
+            `"${q.difficulty || 'medium'}"`,
+            `"${(q.category || '').replace(/"/g, '""')}"`,
           ];
           csvContent += row.join(',') + '\n';
         });
       } else {
-        csvContent = `${project.fieldLabels?.field1 || 'Field 1'},${project.fieldLabels?.field2 || 'Field 2'},${project.fieldLabels?.field3 || 'Field 3'}\n`;
+        csvContent = `${project.fieldLabels?.field1 || 'Field 1'},${project.fieldLabels?.field2 || 'Field 2'},${project.fieldLabels?.field3 || 'Field 3'},Difficulty,Category\n`;
         items.forEach((q) => {
           const row = [
             `"${(q.field1 || '').replace(/"/g, '""')}"`,
             `"${(q.field2 || '').replace(/"/g, '""')}"`,
             `"${(q.field3 || '').replace(/"/g, '""')}"`,
+            `"${q.difficulty || 'medium'}"`,
+            `"${(q.category || '').replace(/"/g, '""')}"`,
           ];
           csvContent += row.join(',') + '\n';
         });
@@ -470,12 +517,22 @@ export default function Questions() {
             label: 'Question',
             render: (r) => (
               <div>
-                <p className="font-semibold text-slate-900">{r.field1 || '—'}</p>
-                {r.hint && (
-                  <p className="mt-0.5 flex items-center gap-1 text-xs text-amber-700">
-                    <span className="font-medium">💡 Hint:</span> {r.hint}
-                  </p>
-                )}
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-slate-900">{r.field1 || '—'}</p>
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  {difficultyBadge(r.difficulty)}
+                  {r.category && (
+                    <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+                      <Tag size={10} /> {r.category}
+                    </span>
+                  )}
+                  {r.hint && (
+                    <span className="flex items-center gap-1 text-[11px] text-amber-700">
+                      <span className="font-medium">💡 Hint:</span> {r.hint}
+                    </span>
+                  )}
+                </div>
               </div>
             ),
           },
@@ -509,7 +566,19 @@ export default function Questions() {
           {
             key: 'field1',
             label: labels.field1,
-            render: (r) => <span className="font-semibold text-slate-900">{r.field1 || '—'}</span>,
+            render: (r) => (
+              <div>
+                <p className="font-semibold text-slate-900">{r.field1 || '—'}</p>
+                <div className="mt-1 flex items-center gap-2">
+                  {difficultyBadge(r.difficulty)}
+                  {r.category && (
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+                      #{r.category}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ),
           },
           { key: 'field2', label: labels.field2, render: (r) => <span className="text-slate-600">{r.field2 || '—'}</span> },
           { key: 'field3', label: labels.field3, render: (r) => <span className="text-slate-500">{r.field3 || '—'}</span> },
@@ -571,11 +640,20 @@ export default function Questions() {
 
         {/* Header Action Buttons */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* AI Generator Button */}
+          <button
+            onClick={() => setAiModalOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 px-3.5 py-2 text-xs font-bold text-white shadow-md shadow-indigo-500/25 hover:scale-105 transition-all"
+          >
+            <Sparkles size={14} className="text-amber-300 animate-pulse" />
+            <span>AI Generator</span>
+          </button>
+
           <button
             onClick={() => setSimulatorOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-indigo-500/20 hover:scale-105 transition-all"
+            className="flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-all"
           >
-            <Play size={13} className="fill-white" />
+            <Play size={13} className="fill-indigo-700" />
             <span>Play Test</span>
           </button>
 
@@ -644,7 +722,7 @@ export default function Questions() {
             </p>
             <p className="mt-0.5 opacity-90">
               {total === 0
-                ? 'Games connecting to this project will receive empty sessions until questions are added.'
+                ? 'Generate with AI or add questions manually to start serving real game sessions.'
                 : isReady
                 ? `Each game session will randomly select ${poolRequired} questions from your pool of ${total}.`
                 : `We recommend adding at least ${poolRequired - total} more questions to prevent question repetition in games.`}
@@ -652,31 +730,90 @@ export default function Questions() {
           </div>
         </div>
 
-        {total < poolRequired && (
+        <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={handleSeedSamples}
-            disabled={seedingSamples}
-            className="flex shrink-0 items-center gap-1.5 rounded-xl bg-white px-3.5 py-1.5 font-bold shadow-sm border border-slate-200 text-slate-800 hover:bg-slate-50 transition-all hover:scale-105"
+            onClick={() => setAiModalOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-1.5 font-bold text-white shadow-sm hover:bg-indigo-700 transition-all hover:scale-105"
           >
-            <Sparkles size={13} className="text-indigo-600" />
-            <span>{seedingSamples ? 'Seeding...' : 'Seed 5 Sample Questions'}</span>
+            <Sparkles size={13} className="text-amber-300" />
+            <span>Generate with AI</span>
           </button>
-        )}
+          {total < poolRequired && (
+            <button
+              onClick={handleSeedSamples}
+              disabled={seedingSamples}
+              className="flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 font-semibold shadow-sm border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all"
+            >
+              <span>{seedingSamples ? 'Seeding...' : 'Seed 5 Samples'}</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Search & Bulk Selection Bar */}
+      {/* Search, Filter & Bulk Selection Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="relative max-w-sm flex-1">
-          <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-          <input
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="input pl-10 text-xs"
-            placeholder={isMcq ? 'Search questions by keyword...' : `Search by ${labels.field1.toLowerCase()}...`}
-          />
+        <div className="flex flex-1 flex-wrap items-center gap-3 max-w-lg">
+          {/* Search Box */}
+          <div className="relative min-w-[200px] flex-1">
+            <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+            <input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="input pl-10 text-xs"
+              placeholder={isMcq ? 'Search questions by keyword...' : `Search by ${labels.field1.toLowerCase()}...`}
+            />
+          </div>
+
+          {/* Difficulty Filter */}
+          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-100 p-1 text-xs">
+            <button
+              onClick={() => {
+                setDifficultyFilter('all');
+                setPage(1);
+              }}
+              className={`rounded-lg px-2.5 py-1 font-medium transition-all ${
+                difficultyFilter === 'all' ? 'bg-white font-bold text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => {
+                setDifficultyFilter('easy');
+                setPage(1);
+              }}
+              className={`rounded-lg px-2.5 py-1 font-medium transition-all ${
+                difficultyFilter === 'easy' ? 'bg-white font-bold text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Easy
+            </button>
+            <button
+              onClick={() => {
+                setDifficultyFilter('medium');
+                setPage(1);
+              }}
+              className={`rounded-lg px-2.5 py-1 font-medium transition-all ${
+                difficultyFilter === 'medium' ? 'bg-white font-bold text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Medium
+            </button>
+            <button
+              onClick={() => {
+                setDifficultyFilter('hard');
+                setPage(1);
+              }}
+              className={`rounded-lg px-2.5 py-1 font-medium transition-all ${
+                difficultyFilter === 'hard' ? 'bg-white font-bold text-rose-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Hard
+            </button>
+          </div>
         </div>
 
         {/* Floating Bulk Action Indicator */}
@@ -719,15 +856,18 @@ export default function Questions() {
         error={loadError}
         onRetry={load}
         emptyMessage={search ? 'No questions match your query' : 'This question bank is empty'}
-        emptyHint="Add questions one by one, import a CSV/Word document, or click below to seed sample questions."
+        emptyHint="Use the AI Question Generator to create questions in seconds, or add manually."
         emptyAction={
           !search && (
             <div className="flex flex-wrap gap-2 justify-center mt-2">
+              <button onClick={() => setAiModalOpen(true)} className="btn-primary text-xs bg-gradient-to-r from-purple-600 to-indigo-600">
+                <Sparkles size={13} className="text-amber-300" />
+                Generate with AI
+              </button>
               <button onClick={handleSeedSamples} disabled={seedingSamples} className="btn-secondary text-xs">
-                <Sparkles size={13} className="text-indigo-600" />
                 Seed 5 Sample Questions
               </button>
-              <button onClick={openAdd} className="btn-primary text-xs">
+              <button onClick={openAdd} className="btn-secondary text-xs">
                 <Plus size={13} />
                 Add Question
               </button>
@@ -753,7 +893,7 @@ export default function Questions() {
                   value={form.field1}
                   onChange={(e) => setForm({ ...form, field1: e.target.value })}
                   className="input text-sm resize-none"
-                  placeholder="e.g. Which country won the 2011 Cricket World Cup?"
+                  placeholder="e.g. Which cricketer has the highest individual score in ODI cricket?"
                 />
               </div>
 
@@ -800,7 +940,7 @@ export default function Questions() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="label">Correct Answer</label>
                   <select
@@ -809,7 +949,7 @@ export default function Questions() {
                     onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
                     className="input text-xs font-bold"
                   >
-                    <option value="">Select Answer</option>
+                    <option value="">Select</option>
                     <option value="A">A</option>
                     <option value="B">B</option>
                     <option value="C">C</option>
@@ -817,14 +957,36 @@ export default function Questions() {
                   </select>
                 </div>
                 <div>
-                  <label className="label">Hint (Optional)</label>
+                  <label className="label">Difficulty</label>
+                  <select
+                    value={form.difficulty}
+                    onChange={(e) => setForm({ ...form, difficulty: e.target.value })}
+                    className="input text-xs font-semibold"
+                  >
+                    <option value="easy">🟢 Easy</option>
+                    <option value="medium">🟡 Medium</option>
+                    <option value="hard">🔴 Hard</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Category / Tag</label>
                   <input
-                    value={form.hint}
-                    onChange={(e) => setForm({ ...form, hint: e.target.value })}
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
                     className="input text-xs"
-                    placeholder="Clue for players"
+                    placeholder="e.g. IPL, WorldCup"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="label">Hint (Optional)</label>
+                <input
+                  value={form.hint}
+                  onChange={(e) => setForm({ ...form, hint: e.target.value })}
+                  className="input text-xs"
+                  placeholder="Clue for players"
+                />
               </div>
             </>
           ) : (
@@ -855,6 +1017,29 @@ export default function Questions() {
                   className="input text-sm"
                 />
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Difficulty</label>
+                  <select
+                    value={form.difficulty}
+                    onChange={(e) => setForm({ ...form, difficulty: e.target.value })}
+                    className="input text-xs font-semibold"
+                  >
+                    <option value="easy">🟢 Easy</option>
+                    <option value="medium">🟡 Medium</option>
+                    <option value="hard">🔴 Hard</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Category / Tag</label>
+                  <input
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    className="input text-xs"
+                    placeholder="e.g. Science, Grammar"
+                  />
+                </div>
+              </div>
             </>
           )}
 
@@ -868,6 +1053,14 @@ export default function Questions() {
           </div>
         </form>
       </Modal>
+
+      {/* AI Question Generator Modal */}
+      <AIQuestionGeneratorModal
+        isOpen={aiModalOpen}
+        onClose={() => setAiModalOpen(false)}
+        project={project}
+        onQuestionsGenerated={load}
+      />
 
       {/* Upload File Modal */}
       <Modal isOpen={uploadOpen} onClose={() => setUploadOpen(false)} title="Import Question Bank">

@@ -10,6 +10,7 @@ const {
   getRecentQuestions,
   bulkDeleteQuestions,
   seedSampleQuestions,
+  generateAIQuestions,
 } = require('../controllers/questionController');
 const { protect } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
@@ -57,6 +58,9 @@ router.post('/projects/:id/questions/bulk-delete', bulkDeleteQuestions);
 
 // Seed sample questions
 router.post('/projects/:id/questions/sample-seed', seedSampleQuestions);
+
+// Generate questions using AI
+router.post('/projects/:id/questions/ai-generate', generateAIQuestions);
 
 // Update question
 router.put(

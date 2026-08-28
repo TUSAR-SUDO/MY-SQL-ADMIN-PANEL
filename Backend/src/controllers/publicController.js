@@ -47,38 +47,101 @@ const listProjects = async (req, res) => {
 // @access  Public
 const getSession = async (req, res) => {
   const { slug } = req.params;
+  const { difficulty, category } = req.query;
+
   const project = await prisma.project.findUnique({ where: { slug } });
   if (!project) {
     return res.status(404).json({ message: 'Project not found' });
   }
-  const count = await prisma.question.count({ where: { projectId: project.id } });
-  const limit = Math.min(project.questionsPerQuiz || 15, count);
+
+  const requestedLimit = Number(req.query.limit) || project.questionsPerQuiz || 15;
+  const limit = Math.min(Math.max(1, requestedLimit), 100);
 
   const isMcq = project.projectType === 'mcq';
 
-  // MySQL random sampling: ORDER BY RAND() LIMIT ?
-  // Using raw query for random selection (equivalent to MongoDB $sample)
-  let questions;
-  if (limit > 0) {
+  // Build filters for count check
+  const where = { projectId: project.id };
+  if (difficulty && difficulty !== 'all') {
+    where.difficulty = difficulty.toLowerCase();
+  }
+  if (category && category !== 'all') {
+    where.category = category;
+  }
+
+  const count = await prisma.question.count({ where });
+  const take = Math.min(limit, count);
+
+  let questions = [];
+  if (take > 0) {
     if (isMcq) {
-      questions = await prisma.$queryRaw`
-        SELECT field1, optionA, optionB, optionC, optionD, correctAnswer, hint
-        FROM Question
-        WHERE projectId = ${project.id}
-        ORDER BY RAND()
-        LIMIT ${limit}
-      `;
+      if (difficulty && category) {
+        questions = await prisma.$queryRaw`
+          SELECT field1, optionA, optionB, optionC, optionD, correctAnswer, hint, difficulty, category
+          FROM Question
+          WHERE projectId = ${project.id} AND difficulty = ${difficulty.toLowerCase()} AND category = ${category}
+          ORDER BY RAND()
+          LIMIT ${take}
+        `;
+      } else if (difficulty) {
+        questions = await prisma.$queryRaw`
+          SELECT field1, optionA, optionB, optionC, optionD, correctAnswer, hint, difficulty, category
+          FROM Question
+          WHERE projectId = ${project.id} AND difficulty = ${difficulty.toLowerCase()}
+          ORDER BY RAND()
+          LIMIT ${take}
+        `;
+      } else if (category) {
+        questions = await prisma.$queryRaw`
+          SELECT field1, optionA, optionB, optionC, optionD, correctAnswer, hint, difficulty, category
+          FROM Question
+          WHERE projectId = ${project.id} AND category = ${category}
+          ORDER BY RAND()
+          LIMIT ${take}
+        `;
+      } else {
+        questions = await prisma.$queryRaw`
+          SELECT field1, optionA, optionB, optionC, optionD, correctAnswer, hint, difficulty, category
+          FROM Question
+          WHERE projectId = ${project.id}
+          ORDER BY RAND()
+          LIMIT ${take}
+        `;
+      }
     } else {
-      questions = await prisma.$queryRaw`
-        SELECT field1, field2, field3
-        FROM Question
-        WHERE projectId = ${project.id}
-        ORDER BY RAND()
-        LIMIT ${limit}
-      `;
+      if (difficulty && category) {
+        questions = await prisma.$queryRaw`
+          SELECT field1, field2, field3, difficulty, category
+          FROM Question
+          WHERE projectId = ${project.id} AND difficulty = ${difficulty.toLowerCase()} AND category = ${category}
+          ORDER BY RAND()
+          LIMIT ${take}
+        `;
+      } else if (difficulty) {
+        questions = await prisma.$queryRaw`
+          SELECT field1, field2, field3, difficulty, category
+          FROM Question
+          WHERE projectId = ${project.id} AND difficulty = ${difficulty.toLowerCase()}
+          ORDER BY RAND()
+          LIMIT ${take}
+        `;
+      } else if (category) {
+        questions = await prisma.$queryRaw`
+          SELECT field1, field2, field3, difficulty, category
+          FROM Question
+          WHERE projectId = ${project.id} AND category = ${category}
+          ORDER BY RAND()
+          LIMIT ${take}
+        `;
+      } else {
+        questions = await prisma.$queryRaw`
+          SELECT field1, field2, field3, difficulty, category
+          FROM Question
+          WHERE projectId = ${project.id}
+          ORDER BY RAND()
+          LIMIT ${take}
+        `;
+      }
     }
-  } else {
-    questions = [];
   }
 
   res.json({
@@ -93,6 +156,7 @@ const getSession = async (req, res) => {
       field3: project.fieldLabelField3,
     },
     mainQuestionField: project.mainQuestionField,
+    totalAvailable: count,
     questions,
   });
 };

@@ -16,6 +16,8 @@ const questionToResponse = (q) => ({
   optionD: q.optionD,
   correctAnswer: q.correctAnswer,
   hint: q.hint,
+  difficulty: q.difficulty || 'medium',
+  category: q.category || '',
   createdAt: q.createdAt,
   updatedAt: q.updatedAt,
 });
@@ -24,8 +26,7 @@ const questionToResponse = (q) => ({
 // @route   GET /api/projects/:id/questions
 // @access  Private
 const getQuestions = async (req, res) => {
-  const { search = '' } = req.query;
-  // Clamp pagination so bad input can't request huge/negative pages.
+  const { search = '', difficulty = '', category = '' } = req.query;
   const page = Math.max(1, parseInt(req.query.page, 10) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
 
@@ -38,6 +39,12 @@ const getQuestions = async (req, res) => {
   const where = { projectId: project.id };
   if (search) {
     where.field1 = { contains: search };
+  }
+  if (difficulty && difficulty !== 'all') {
+    where.difficulty = difficulty;
+  }
+  if (category && category !== 'all') {
+    where.category = category;
   }
 
   const total = await prisma.question.count({ where });
@@ -59,7 +66,7 @@ const addQuestion = async (req, res) => {
   if (!project) {
     return res.status(404).json({ message: 'Project not found' });
   }
-  const { field1, field2, field3, optionA, optionB, optionC, optionD, correctAnswer, hint } = req.body;
+  const { field1, field2, field3, optionA, optionB, optionC, optionD, correctAnswer, hint, difficulty, category } = req.body;
 
   if (project.projectType === 'mcq') {
     if (!field1 || !String(field1).trim()) {
@@ -89,6 +96,8 @@ const addQuestion = async (req, res) => {
       optionD: String(optionD || '').trim(),
       correctAnswer: correctAnswer || '',
       hint: String(hint || field3 || '').trim(),
+      difficulty: ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : 'medium',
+      category: String(category || '').trim(),
     },
   });
   res.status(201).json(questionToResponse(question));
@@ -102,7 +111,7 @@ const updateQuestion = async (req, res) => {
   if (!question) {
     return res.status(404).json({ message: 'Question not found' });
   }
-  const { field1, field2, field3, optionA, optionB, optionC, optionD, correctAnswer, hint } = req.body;
+  const { field1, field2, field3, optionA, optionB, optionC, optionD, correctAnswer, hint, difficulty, category } = req.body;
   const updateData = {};
 
   if (field1 !== undefined) {
@@ -119,6 +128,12 @@ const updateQuestion = async (req, res) => {
   if (optionD !== undefined) updateData.optionD = String(optionD).trim();
   if (correctAnswer !== undefined) updateData.correctAnswer = correctAnswer;
   if (hint !== undefined) updateData.hint = String(hint).trim();
+  if (difficulty !== undefined) {
+    updateData.difficulty = ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : 'medium';
+  }
+  if (category !== undefined) {
+    updateData.category = String(category).trim();
+  }
 
   const updated = await prisma.question.update({
     where: { id: question.id },
@@ -627,6 +642,144 @@ const seedSampleQuestions = async (req, res) => {
   res.status(201).json({ message: `Seeded ${inserted.count} sample questions`, count: inserted.count });
 };
 
+// @desc    Generate structured questions using AI (Gemini / AI model)
+// @route   POST /api/projects/:id/questions/ai-generate
+// @access  Private
+const generateAIQuestions = async (req, res) => {
+  const projectId = Number(req.params.id);
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) {
+    return res.status(404).json({ message: 'Project not found' });
+  }
+
+  const { prompt, count = 5, difficulty = 'medium', category = '', apiKey } = req.body;
+  if (!prompt || !String(prompt).trim()) {
+    return res.status(400).json({ message: 'Please provide a topic or prompt for AI generation' });
+  }
+
+  const isMcq = project.projectType === 'mcq';
+  const numQuestions = Math.min(Math.max(1, Number(count) || 5), 20);
+  const geminiKey = apiKey || process.env.GEMINI_API_KEY;
+
+  if (!geminiKey) {
+    return res.status(400).json({
+      message: 'Gemini API Key is required. Please provide a key or add GEMINI_API_KEY to your .env file.',
+    });
+  }
+
+  const systemInstruction = isMcq
+    ? `You are an expert quizmaster and educational game designer. Generate exactly ${numQuestions} high-quality Multiple Choice Questions (MCQs) for the topic: "${prompt}".
+Difficulty level: ${difficulty}.
+Category/Tag: ${category || 'General'}.
+
+You MUST return ONLY a valid JSON array of objects with this exact structure:
+[
+  {
+    "field1": "Question prompt here?",
+    "optionA": "First option",
+    "optionB": "Second option",
+    "optionC": "Third option",
+    "optionD": "Fourth option",
+    "correctAnswer": "A", // Exactly one of: "A", "B", "C", "D"
+    "hint": "Helpful educational clue for players",
+    "difficulty": "${difficulty}",
+    "category": "${category || 'General'}"
+  }
+]
+Do not wrap in markdown or backticks. Return raw JSON array only.`
+    : `You are an expert educational game designer. Generate exactly ${numQuestions} pairs of prompt and answers for the topic: "${prompt}".
+Difficulty level: ${difficulty}.
+Category/Tag: ${category || 'General'}.
+
+Field labels:
+Field 1: ${project.fieldLabelField1 || 'Prompt/Word'}
+Field 2: ${project.fieldLabelField2 || 'Definition/Answer'}
+Field 3: ${project.fieldLabelField3 || 'Hint/Clue'}
+
+You MUST return ONLY a valid JSON array of objects with this exact structure:
+[
+  {
+    "field1": "Word or Prompt text",
+    "field2": "Definition or Answer text",
+    "field3": "Helpful educational clue or hint",
+    "difficulty": "${difficulty}",
+    "category": "${category || 'General'}"
+  }
+]
+Do not wrap in markdown or backticks. Return raw JSON array only.`;
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+    const geminiRes = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: systemInstruction }] }],
+        generationConfig: {
+          temperature: 0.7,
+          responseMimeType: 'application/json',
+        },
+      }),
+    });
+
+    if (!geminiRes.ok) {
+      const errBody = await geminiRes.text();
+      return res.status(geminiRes.status).json({
+        message: `Gemini API returned error: ${errBody}`,
+      });
+    }
+
+    const data = await geminiRes.json();
+    const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!candidateText) {
+      return res.status(500).json({ message: 'AI returned empty response' });
+    }
+
+    let parsedQuestions = [];
+    try {
+      parsedQuestions = JSON.parse(candidateText);
+    } catch {
+      // In case wrapped in markdown
+      const cleaned = candidateText.replace(/```json/gi, '').replace(/```/g, '').trim();
+      parsedQuestions = JSON.parse(cleaned);
+    }
+
+    if (!Array.isArray(parsedQuestions) || parsedQuestions.length === 0) {
+      return res.status(500).json({ message: 'Failed to parse AI generated questions as array' });
+    }
+
+    const docs = parsedQuestions.map((q) => ({
+      projectId: project.id,
+      field1: String(q.field1 || '').trim(),
+      field2: String(q.field2 || '').trim(),
+      field3: String(q.field3 || '').trim(),
+      optionA: String(q.optionA || '').trim(),
+      optionB: String(q.optionB || '').trim(),
+      optionC: String(q.optionC || '').trim(),
+      optionD: String(q.optionD || '').trim(),
+      correctAnswer: String(q.correctAnswer || 'A').toUpperCase(),
+      hint: String(q.hint || q.field3 || '').trim(),
+      difficulty: ['easy', 'medium', 'hard'].includes(q.difficulty?.toLowerCase())
+        ? q.difficulty.toLowerCase()
+        : difficulty,
+      category: String(q.category || category || '').trim(),
+    })).filter((q) => q.field1.length > 0);
+
+    if (docs.length === 0) {
+      return res.status(400).json({ message: 'No valid questions were generated' });
+    }
+
+    const inserted = await prisma.question.createMany({ data: docs });
+    res.status(201).json({
+      message: `AI generated and saved ${inserted.count} questions to MySQL`,
+      count: inserted.count,
+      questions: docs,
+    });
+  } catch (err) {
+    res.status(500).json({ message: `AI generation failed: ${err.message}` });
+  }
+};
+
 module.exports = wrapAll({
   getQuestions,
   addQuestion,
@@ -636,4 +789,5 @@ module.exports = wrapAll({
   getRecentQuestions,
   bulkDeleteQuestions,
   seedSampleQuestions,
+  generateAIQuestions,
 });

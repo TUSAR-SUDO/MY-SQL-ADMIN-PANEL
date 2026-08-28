@@ -49,6 +49,8 @@ model Question {
   optionD       String   @default("") @db.VarChar(2000)
   correctAnswer String   @default("") @db.VarChar(10)
   hint          String   @default("") @db.VarChar(2000)
+  difficulty    String   @default("medium") @db.VarChar(20)
+  category      String   @default("") @db.VarChar(100)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

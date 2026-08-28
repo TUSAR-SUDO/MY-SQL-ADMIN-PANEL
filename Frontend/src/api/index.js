@@ -35,6 +35,8 @@ export const bulkDeleteQuestions = (projectId, ids) =>
   api.post(`/projects/${projectId}/questions/bulk-delete`, { ids });
 export const seedSampleQuestions = (projectId) =>
   api.post(`/projects/${projectId}/questions/sample-seed`);
+export const generateAIQuestions = (projectId, data) =>
+  api.post(`/projects/${projectId}/questions/ai-generate`, data);
 export const getRecentQuestions = (params) => api.get('/questions/recent', { params });
 
 // Settings
