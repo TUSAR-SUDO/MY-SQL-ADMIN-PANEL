@@ -450,7 +450,7 @@ export default function Projects() {
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => setSimulatorTarget(p)}
-                        className="flex items-center gap-1.5 rounded-xl bg-primary-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-primary-500/20 hover:bg-primary-700 transition-all hover:scale-105"
+                        className="flex items-center gap-1.5 rounded-xl bg-primary-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-primary-500/20 hover:bg-primary-600 transition-all hover:scale-105"
                       >
                         <Play size={12} className="fill-white" />
                         <span>Play Test</span>
@@ -523,7 +523,7 @@ export default function Projects() {
               <label
                 className={`flex cursor-pointer flex-col rounded-xl border p-3.5 transition-all ${
                   form.projectType === 'mcq'
-                    ? 'border-primary-600 bg-primary-50/50 dark:bg-primary-950/30 ring-2 ring-primary-500/20'
+                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-950/30 ring-2 ring-primary-500/20'
                     : 'border-line bg-panel hover:bg-surface'
                 }`}
               >
@@ -542,7 +542,7 @@ export default function Projects() {
               <label
                 className={`flex cursor-pointer flex-col rounded-xl border p-3.5 transition-all ${
                   form.projectType === 'classic'
-                    ? 'border-primary-600 bg-primary-50/50 dark:bg-primary-950/30 ring-2 ring-primary-500/20'
+                    ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-950/30 ring-2 ring-primary-500/20'
                     : 'border-line bg-panel hover:bg-surface'
                 }`}
               >

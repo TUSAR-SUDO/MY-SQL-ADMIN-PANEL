@@ -33,22 +33,18 @@ const LoginRoute = () => {
 };
 
 const App = () => {
-  const location = useLocation();
-
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/login" element={<LoginRoute />} />
-        <Route element={<RequireAuth />}>
-          <Route path="/" element={<Overview />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/projects/:id/questions" element={<Questions />} />
-          <Route path="/admins" element={<Admins />} />
-          <Route path="/settings" element={<Settings />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AnimatePresence>
+    <Routes>
+      <Route path="/login" element={<LoginRoute />} />
+      <Route element={<RequireAuth />}>
+        <Route path="/" element={<Overview />} />
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/projects/:id/questions" element={<Questions />} />
+        <Route path="/admins" element={<Admins />} />
+        <Route path="/settings" element={<Settings />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 };
 
