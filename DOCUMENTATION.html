@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameCenter MySQL Admin Panel - Complete Feature & Architecture Manual</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --primary-light: #eef2ff;
+      --secondary: #7c3aed;
+      --accent: #06b6d4;
+      --emerald: #059669;
+      --emerald-light: #ecfdf5;
+      --amber: #d97706;
+      --amber-light: #fffbeb;
+      --rose: #e11d48;
+      --rose-light: #fff1f2;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748b;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --slate-50: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--slate-100);
+      color: var(--slate-800);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 60px 50px;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.07);
+      border: 1px solid var(--slate-200);
+    }
+
+    /* Print Controls */
+    .print-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--slate-900);
+      color: white;
+      padding: 14px 24px;
+      border-radius: 16px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3);
+    }
+
+    .btn-print {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-print:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    /* Header Banner */
+    .header-banner {
+      border-bottom: 2px solid var(--slate-200);
+      padding-bottom: 30px;
+      margin-bottom: 40px;
+    }
+
+    .brand-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--slate-900);
+      letter-spacing: -0.8px;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--slate-600);
+      margin-top: 8px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 24px;
+      background: var(--slate-50);
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--slate-200);
+    }
+
+    .meta-item p:first-child {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--slate-500);
+    }
+
+    .meta-item p:last-child {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-top: 2px;
+    }
+
+    /* Section Styling */
+    section {
+      margin-bottom: 45px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--slate-900);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-left: 4px solid var(--primary);
+      padding-left: 12px;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--slate-800);
+      margin: 20px 0 10px 0;
+    }
+
+    p {
+      font-size: 14px;
+      color: var(--slate-700);
+      margin-bottom: 12px;
+    }
+
+    /* Feature Grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin: 20px 0;
+    }
+
+    .feature-card {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: 18px;
+      padding: 20px;
+      transition: all 0.2s;
+    }
+
+    .feature-card .icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+      display: inline-block;
+    }
+
+    .feature-card h4 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 6px;
+    }
+
+    .feature-card p {
+      font-size: 13px;
+      color: var(--slate-600);
+      margin-bottom: 0;
+      line-height: 1.5;
+    }
+
+    /* Badges & Tables */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-easy { background: var(--emerald-light); color: var(--emerald); border: 1px solid rgba(5,150,105,0.2); }
+    .badge-medium { background: var(--amber-light); color: var(--amber); border: 1px solid rgba(217,119,6,0.2); }
+    .badge-hard { background: var(--rose-light); color: var(--rose); border: 1px solid rgba(225,29,72,0.2); }
+    .badge-primary { background: var(--primary-light); color: var(--primary); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--slate-200);
+    }
+
+    th {
+      background: var(--slate-50);
+      color: var(--slate-700);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
+    /* Code Snippets */
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: var(--slate-100);
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: var(--primary-dark);
+    }
+
+    pre {
+      background: var(--slate-900);
+      color: #a5b4fc;
+      padding: 18px 20px;
+      border-radius: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-x: auto;
+      margin: 16px 0;
+      border: 1px solid var(--slate-800);
+    }
+
+    /* Highlights / Pros Box */
+    .pros-box {
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(6, 182, 212, 0.05));
+      border: 1px solid rgba(79, 70, 229, 0.2);
+      border-radius: 20px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+
+    .pros-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .pros-list li {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--slate-800);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pros-list li::before {
+      content: '✔';
+      color: var(--emerald);
+      font-weight: 900;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .container {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      .print-bar {
+        display: none;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+      pre {
+        background: #f8fafc !important;
+        color: #1e293b !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Top Action Bar (Hidden in Print) -->
+    <div class="print-bar">
+      <div>
+        <strong style="font-size: 14px;">🖨️ PDF Export Ready</strong>
+        <p style="font-size: 11px; opacity: 0.8; margin-top: 2px;">Click Print and select "Save as PDF" to generate your official manual.</p>
+      </div>
+      <button class="btn-print" onclick="window.print()">
+        <span>Print to PDF</span> ➔
+      </button>
+    </div>
+
+    <!-- Header / Banner -->
+    <header class="header-banner">
+      <div class="brand-tag">GameCenter Studio Engine</div>
+      <h1>MySQL Admin Panel & Game Integration Hub</h1>
+      <p class="subtitle">Complete Technical Specification, Feature Catalogue, Architecture Manual & Integration Reference</p>
+
+      <div class="meta-grid">
+        <div class="meta-item">
+          <p>Database</p>
+          <p>MySQL (Railway Cloud)</p>
+        </div>
+        <div class="meta-item">
+          <p>ORM Layer</p>
+          <p>Prisma Client v6.x</p>
+        </div>
+        <div class="meta-item">
+          <p>Deployment</p>
+          <p>Docker / Render (Unified)</p>
+        </div>
+        <div class="meta-item">
+          <p>AI Engine</p>
+          <p>Google Gemini 1.5 / 2.0</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECTION 1: Architecture & Overview -->
+    <section>
+      <h2>1. System Architecture & Core Stack</h2>
+      <p>
+        The <strong>GameCenter Admin Panel</strong> is an enterprise-grade full-stack management hub engineered to power multiple external browser games, mobile apps, and educational quiz platforms from a single centralized dashboard.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="icon">⚡</span>
+          <h4>Single-Service Monorepo</h4>
+          <p>Both the React (Vite) UI and the Express backend run inside a single Docker container on port 5000. Eliminates CORS issues, separate billing, and complex cross-domain routing.</p>
+        </div>
+        <div class="feature-card">
+          <span class="icon">🐬</span>
+          <h4>Relational MySQL + Prisma</h4>
+          <p>Strict schema validation with auto-increment IDs, cascade deletions on project removal, relational indexes, and sub-millisecond random quiz sampling.</p>
+        </div>
+        <div class="feature-card">
+          <span class="icon">🔐</span>
+          <h4>Multi-Tier Security</h4>
+          <p>JWT authentication, bcrypt password hashing, role-based access control (Super Admin / Sub Admin), and strict origin whitelisting for client game endpoints.</p>
+        </div>
+        <div class="feature-card">
+          <span class="icon">🤖</span>
+          <h4>Generative AI Engine</h4>
+          <p>Built-in integration with Google Gemini AI for instant structured quiz generation, automatic MCQ option distractor formulation, and educational hints.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Key Features & Capabilities -->
+    <section class="page-break">
+      <h2>2. Complete Feature Catalogue</h2>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="icon">🤖</span>
+          <h4>1. AI Question Bank Generator</h4>
+          <p>Type any topic (e.g. <em>"2024 IPL final match records"</em>) and specify quantity (5-20), difficulty, and tags. AI generates structured MCQs with hints and inserts them directly into MySQL in 3 seconds.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="icon">🎮</span>
+          <h4>2. Live Game Embed & Play-Tester</h4>
+          <p>Embeds your deployed game (e.g. <code>cricket-nine-phi.vercel.app</code>) inside the admin dashboard with <strong>Desktop, Tablet, and iPhone Mobile Frames</strong> and a 1-click reload button.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="icon">🎯</span>
+          <h4>3. Multi-Level Difficulty & Tags</h4>
+          <p>Tag questions as <span class="badge badge-easy">Easy</span>, <span class="badge badge-medium">Medium</span>, or <span class="badge badge-hard">Hard</span> with custom topic tags (e.g. <code>#IPL</code>, <code>#WorldCup</code>) for multi-round game progression.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="icon">🎨</span>
+          <h4>4. Studio Project Cards & Table View</h4>
+          <p>Switch between interactive studio cards with auto-detected game emojis (🏏, 🎯, 📚, 🧮, 🧪) and dense table view with question health indicators (<code>Ready</code> vs <code>Low Pool</code>).</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="icon">📦</span>
+          <h4>5. 1-Click JSON & CSV Export</h4>
+          <p>Export entire question databases to formatted CSV or JSON files with a single click for offline backups, sharing, or migrating between game projects.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="icon">📄</span>
+          <h4>6. Smart File Import (CSV / DOCX)</h4>
+          <p>Bulk import question banks from spreadsheets or Word (.docx) documents with visual interactive column mapping and automatic duplicate detection.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="icon">🗑️</span>
+          <h4>7. Multi-Select Bulk Actions</h4>
+          <p>Checkboxes on every table row with a master "Select All" toggle and floating bulk-action toolbar for atomic batch deletions.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="icon">🔌</span>
+          <h4>8. Multi-Framework Code Generator</h4>
+          <p>Instant copy-ready integration snippets for <strong>React Hook (<code>useQuiz</code>)</strong>, <strong>Vanilla JS</strong>, <strong>TypeScript</strong>, <strong>Unity (C#)</strong>, and <strong>cURL</strong>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Client Integration & API Reference -->
+    <section>
+      <h2>3. Client Game Integration & Public API</h2>
+      <p>External games (e.g. Vercel, Netlify, Unity, HTML5) fetch randomized question sessions from your public endpoint:</p>
+
+      <pre><code>// Public Session Endpoint
+GET /api/public/projects/:slug/session
+
+// Query Parameters:
+// ?difficulty=easy | medium | hard   (Filter by difficulty)
+// ?category=ipl                      (Filter by category / tag)
+// ?limit=10                          (Number of questions to serve)</code></pre>
+
+      <h3>React Hook Example (`useQuiz.js`)</h3>
+      <pre><code>import { useState, useEffect } from 'react';
+
+export function useQuiz(slug = 'cricket', difficulty = 'medium') {
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`https://my-sql-admin-panel.onrender.com/api/public/projects/${slug}/session?difficulty=${difficulty}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setQuestions(data.questions.map((q) => ({
+          question: q.field1,
+          options: [q.optionA, q.optionB, q.optionC, q.optionD],
+          correctAnswer: q.correctAnswer, // "A" | "B" | "C" | "D"
+          hint: q.hint,
+          difficulty: q.difficulty,
+          category: q.category
+        })));
+        setLoading(false);
+      });
+  }, [slug, difficulty]);
+
+  return { questions, loading };
+}</code></pre>
+    </section>
+
+    <!-- SECTION 4: Database Schema Reference -->
+    <section class="page-break">
+      <h2>4. MySQL Database Schema</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th>Primary Fields</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Admin</strong></td>
+            <td><code>id, email, passwordHash, role, name</code></td>
+            <td>Super Admin and Sub Admin user credentials with bcrypt encryption.</td>
+          </tr>
+          <tr>
+            <td><strong>Project</strong></td>
+            <td><code>id, name, slug, projectType, questionsPerQuiz, allowedOrigins</code></td>
+            <td>Represents an individual game/quiz configuration.</td>
+          </tr>
+          <tr>
+            <td><strong>Question</strong></td>
+            <td><code>id, projectId, field1..3, optionA..D, correctAnswer, hint, difficulty, category</code></td>
+            <td>Structured question bank supporting both MCQ (A/B/C/D) and Classic prompt/answer pairs.</td>
+          </tr>
+          <tr>
+            <td><strong>Settings</strong></td>
+            <td><code>id, allowedGameOrigins, publicApiBase</code></td>
+            <td>Global CORS whitelists and public endpoint overrides.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- SECTION 5: Key Pros & Advantages -->
+    <section>
+      <h2>5. Key Advantages & Competitive Pros</h2>
+      
+      <div class="pros-box">
+        <ul class="pros-list">
+          <li>100% Free Cloud Hosting via Render + Railway</li>
+          <li>Sub-millisecond Question Retrieval with MySQL Indexes</li>
+          <li>Zero-Code Game Integration via Pre-built Code Generators</li>
+          <li>Native Mobile / Tablet Device Simulator built into Admin</li>
+          <li>AI-Powered Question Generation via Gemini API</li>
+          <li>Instant JSON / CSV Database Export & Backup</li>
+          <li>Progressive Game Level Support with Difficulty Tagging</li>
+          <li>Multi-Game Monorepo: Powers 100+ Games from 1 URL</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="border-top: 1px solid var(--slate-200); padding-top: 20px; text-align: center; font-size: 12px; color: var(--slate-500); margin-top: 40px;">
+      <p>GameCenter Admin Panel • Built with React, TailwindCSS, Express.js, Prisma ORM & MySQL</p>
+      <p style="margin-top: 4px;">Document generated on August 29, 2026 • Ready for Print & PDF Export</p>
+    </footer>
+  </div>
+
+</body>
+</html>
