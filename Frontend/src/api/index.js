@@ -31,6 +31,10 @@ export const uploadQuestions = (projectId, formData) =>
   api.post(`/projects/${projectId}/questions/upload`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+export const bulkDeleteQuestions = (projectId, ids) =>
+  api.post(`/projects/${projectId}/questions/bulk-delete`, { ids });
+export const seedSampleQuestions = (projectId) =>
+  api.post(`/projects/${projectId}/questions/sample-seed`);
 export const getRecentQuestions = (params) => api.get('/questions/recent', { params });
 
 // Settings

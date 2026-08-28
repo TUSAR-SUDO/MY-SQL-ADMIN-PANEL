@@ -1,15 +1,47 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Plus, Pencil, Trash2, Upload, Search, ArrowLeft, FileUp, ArrowRight, Columns3, Plug, PlugZap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Upload,
+  Search,
+  ArrowLeft,
+  FileUp,
+  ArrowRight,
+  Columns3,
+  Plug,
+  PlugZap,
+  Download,
+  Play,
+  Sparkles,
+  CheckCircle2,
+  AlertTriangle,
+  FileJson,
+  FileSpreadsheet,
+  CheckSquare,
+  Square,
+  RefreshCw,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ConnectGame from '../components/ConnectGame';
-import { getProject, getQuestions, addQuestion, updateQuestion, deleteQuestion, uploadQuestions } from '../api';
+import GameSimulatorModal from '../components/GameSimulatorModal';
+import {
+  getProject,
+  getQuestions,
+  addQuestion,
+  updateQuestion,
+  deleteQuestion,
+  uploadQuestions,
+  bulkDeleteQuestions,
+  seedSampleQuestions,
+} from '../api';
 
-const Questions = () => {
+export default function Questions() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
@@ -26,6 +58,13 @@ const Questions = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [connectOpen, setConnectOpen] = useState(false);
+  const [simulatorOpen, setSimulatorOpen] = useState(false);
+
+  // Bulk Selection State
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [seedingSamples, setSeedingSamples] = useState(false);
 
   // Upload state
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -45,16 +84,13 @@ const Questions = () => {
         getQuestions(id, { search, page, limit: 10 }),
       ]);
       setProject(projectRes.data);
-      setQuestions(questionsRes.data.questions);
-      setTotal(questionsRes.data.total);
+      setQuestions(questionsRes.data.questions || []);
+      setTotal(questionsRes.data.total || 0);
       setLoadError('');
     } catch (err) {
-      // Without this the page spins forever when the project fetch fails.
       setLoadError(
         err.response?.data?.message ||
-          (err.response
-            ? `The API replied ${err.response.status}.`
-            : 'The API did not respond. Is the backend running?')
+          (err.response ? `The API replied ${err.response.status}.` : 'The API did not respond. Is the backend running?')
       );
       setQuestions([]);
       setTotal(0);
@@ -69,6 +105,19 @@ const Questions = () => {
 
   const isMcq = project?.projectType === 'mcq';
 
+  // Toggle selection
+  const toggleSelectOne = (qId) => {
+    setSelectedIds((prev) => (prev.includes(qId) ? prev.filter((i) => i !== qId) : [...prev, qId]));
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === questions.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(questions.map((q) => q._id));
+    }
+  };
+
   const openAdd = () => {
     setEditing(null);
     setForm({ field1: '', field2: '', field3: '', optionA: '', optionB: '', optionC: '', optionD: '', correctAnswer: '', hint: '' });
@@ -78,8 +127,13 @@ const Questions = () => {
   const openEdit = (q) => {
     setEditing(q);
     setForm({
-      field1: q.field1, field2: q.field2, field3: q.field3,
-      optionA: q.optionA || '', optionB: q.optionB || '', optionC: q.optionC || '', optionD: q.optionD || '',
+      field1: q.field1 || '',
+      field2: q.field2 || '',
+      field3: q.field3 || '',
+      optionA: q.optionA || '',
+      optionB: q.optionB || '',
+      optionC: q.optionC || '',
+      optionD: q.optionD || '',
       correctAnswer: q.correctAnswer || '',
       hint: q.hint || q.field3 || '',
     });
@@ -112,6 +166,7 @@ const Questions = () => {
       await deleteQuestion(deleteTarget._id);
       toast.success('Question deleted');
       setDeleteTarget(null);
+      setSelectedIds((prev) => prev.filter((i) => i !== deleteTarget._id));
       load();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete question');
@@ -120,7 +175,112 @@ const Questions = () => {
     }
   };
 
-  // --- CSV/DOCX Preview Logic ---
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    setBulkDeleting(true);
+    try {
+      const res = await bulkDeleteQuestions(id, selectedIds);
+      toast.success(res.data.message || `Deleted ${selectedIds.length} questions`);
+      setSelectedIds([]);
+      setBulkConfirmOpen(false);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Bulk delete failed');
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const handleSeedSamples = async () => {
+    setSeedingSamples(true);
+    try {
+      const res = await seedSampleQuestions(id);
+      toast.success(res.data.message || 'Seeded 5 sample questions!');
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to seed sample questions');
+    } finally {
+      setSeedingSamples(false);
+    }
+  };
+
+  // Export to JSON
+  const handleExportJSON = async () => {
+    try {
+      const allRes = await getQuestions(id, { limit: 1000 });
+      const items = allRes.data.questions || [];
+      const exportObject = {
+        project: {
+          name: project.name,
+          slug: project.slug,
+          projectType: project.projectType,
+          questionsPerQuiz: project.questionsPerQuiz,
+          fieldLabels: project.fieldLabels,
+        },
+        exportedAt: new Date().toISOString(),
+        totalQuestions: items.length,
+        questions: items,
+      };
+      const blob = new Blob([JSON.stringify(exportObject, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${project.slug}-questions.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${items.length} questions to JSON`);
+    } catch (err) {
+      toast.error('Failed to export questions');
+    }
+  };
+
+  // Export to CSV
+  const handleExportCSV = async () => {
+    try {
+      const allRes = await getQuestions(id, { limit: 1000 });
+      const items = allRes.data.questions || [];
+      let csvContent = '';
+
+      if (isMcq) {
+        csvContent = 'Question,Option A,Option B,Option C,Option D,Correct Answer,Hint\n';
+        items.forEach((q) => {
+          const row = [
+            `"${(q.field1 || '').replace(/"/g, '""')}"`,
+            `"${(q.optionA || '').replace(/"/g, '""')}"`,
+            `"${(q.optionB || '').replace(/"/g, '""')}"`,
+            `"${(q.optionC || '').replace(/"/g, '""')}"`,
+            `"${(q.optionD || '').replace(/"/g, '""')}"`,
+            `"${q.correctAnswer || ''}"`,
+            `"${(q.hint || '').replace(/"/g, '""')}"`,
+          ];
+          csvContent += row.join(',') + '\n';
+        });
+      } else {
+        csvContent = `${project.fieldLabels?.field1 || 'Field 1'},${project.fieldLabels?.field2 || 'Field 2'},${project.fieldLabels?.field3 || 'Field 3'}\n`;
+        items.forEach((q) => {
+          const row = [
+            `"${(q.field1 || '').replace(/"/g, '""')}"`,
+            `"${(q.field2 || '').replace(/"/g, '""')}"`,
+            `"${(q.field3 || '').replace(/"/g, '""')}"`,
+          ];
+          csvContent += row.join(',') + '\n';
+        });
+      }
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${project.slug}-questions.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${items.length} questions to CSV`);
+    } catch (err) {
+      toast.error('Failed to export questions');
+    }
+  };
+
+  // CSV parser for import
   const parseCSVLocally = (text) => {
     const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
     return lines.map((line) => {
@@ -147,7 +307,6 @@ const Questions = () => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
-    // DOCX cannot be previewed client-side, send directly with a note
     if (selectedFile.name.toLowerCase().endsWith('.docx')) {
       setFile(selectedFile);
       setPreviewData([]);
@@ -157,13 +316,11 @@ const Questions = () => {
       } else {
         setColumnMapping({ field1: 0, field2: 1, field3: 2 });
       }
-      // Skip preview for DOCX, go straight to upload confirm
       setUploadOpen(false);
       setPreviewOpen(true);
       return;
     }
 
-    // CSV: read and preview locally
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target.result;
@@ -172,7 +329,6 @@ const Questions = () => {
         toast.error('File appears to be empty');
         return;
       }
-      // Detect if first row looks like headers
       const first = rows[0].map((c) => c.toLowerCase());
       const headerKeywords = ['word', 'definition', 'hint', 'question', 'answer', 'field1', 'field2', 'field3', 'option', 'opt a', 'option a'];
       const isHeader = first.some((c) => headerKeywords.some((k) => c.includes(k)));
@@ -185,7 +341,7 @@ const Questions = () => {
         setDetectedHeaders(Array.from({ length: maxCols }, (_, i) => `Column ${i + 1}`));
         setPreviewData(rows);
       }
-      // Auto-map columns
+
       if (isMcq) {
         setColumnMapping({
           field1: 0,
@@ -215,7 +371,6 @@ const Questions = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      // Send column mapping to the backend
       formData.append('mapping[field1]', columnMapping.field1);
       if (isMcq) {
         formData.append('mapping[optionA]', columnMapping.optionA);
@@ -252,11 +407,10 @@ const Questions = () => {
           <h2 className="mt-4 text-lg font-bold text-ink">Couldn't open this project</h2>
           <p className="mt-1.5 text-sm text-muted">{loadError}</p>
           <div className="mt-5 flex justify-center gap-3">
-            <button onClick={() => navigate('/projects')} className="btn-secondary">
-              <ArrowLeft size={16} />
-              All projects
+            <button onClick={() => navigate('/projects')} className="btn-secondary text-xs">
+              <ArrowLeft size={15} /> All projects
             </button>
-            <button onClick={load} className="btn-primary">
+            <button onClick={load} className="btn-primary text-xs">
               Try again
             </button>
           </div>
@@ -271,162 +425,289 @@ const Questions = () => {
     );
   }
 
-  const labels = project.fieldLabels;
+  const labels = project.fieldLabels || { field1: 'Field 1', field2: 'Field 2', field3: 'Field 3' };
+  const poolRequired = project.questionsPerQuiz || 15;
+  const isReady = total >= poolRequired;
 
-  const columns = isMcq
-    ? [
-        {
-          key: 'field1',
-          label: 'Question',
-          render: (r) => (
-            <div>
-              <p className="font-semibold text-ink">{r.field1 || '—'}</p>
-              {r.hint && (
-                <p className="mt-0.5 flex items-center gap-1 text-xs text-amber-700">
-                  <span className="font-medium">💡 Hint:</span> {r.hint}
-                </p>
-              )}
-            </div>
-          ),
-        },
-        {
-          key: 'options',
-          label: 'Options',
-          render: (r) => (
-            <div className="flex flex-wrap gap-1">
-              {['A', 'B', 'C', 'D'].map((letter) => (
-                <span
-                  key={letter}
-                  className={r.correctAnswer === letter ? 'badge-primary' : 'badge-neutral'}
-                >
-                  {letter}: {r[`option${letter}`] || '—'}
-                </span>
-              ))}
-            </div>
-          ),
-        },
-        {
-          key: 'correctAnswer',
-          label: 'Answer',
-          render: (r) => (
-            <span className="badge-primary font-bold">{r.correctAnswer || '—'}</span>
-          ),
-        },
-        {
-          key: 'actions',
-          label: '',
-          render: (r) => (
-            <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-              <button
-                onClick={() => openEdit(r)}
-                className="rounded-lg p-2 text-muted transition-colors hover:bg-primary-50 hover:text-primary-700"
-                title="Edit"
-                aria-label="Edit question"
-              >
-                <Pencil size={16} />
-              </button>
-              <button
-                onClick={() => setDeleteTarget(r)}
-                className="rounded-lg p-2 text-muted transition-colors hover:bg-red-50 hover:text-red-600"
-                title="Delete"
-                aria-label="Delete question"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ),
-        },
-      ]
-    : [
-        {
-          key: 'field1',
-          label: labels.field1,
-          render: (r) => <span className="font-semibold text-ink">{r.field1 || '—'}</span>,
-        },
-        { key: 'field2', label: labels.field2, render: (r) => <span className="text-muted">{r.field2 || '—'}</span> },
-        { key: 'field3', label: labels.field3, render: (r) => <span className="text-muted">{r.field3 || '—'}</span> },
-        {
-          key: 'actions',
-          label: '',
-          render: (r) => (
-            <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-              <button
-                onClick={() => openEdit(r)}
-                className="rounded-lg p-2 text-muted transition-colors hover:bg-primary-50 hover:text-primary-700"
-                title="Edit"
-                aria-label="Edit question"
-              >
-                <Pencil size={16} />
-              </button>
-              <button
-                onClick={() => setDeleteTarget(r)}
-                className="rounded-lg p-2 text-muted transition-colors hover:bg-red-50 hover:text-red-600"
-                title="Delete"
-                aria-label="Delete question"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ),
-        },
-      ];
-
-  const previewRows = previewData.slice(0, 10);
-  const isDocx = file?.name?.toLowerCase().endsWith('.docx');
+  const columns = [
+    {
+      key: 'select',
+      label: (
+        <button
+          type="button"
+          onClick={toggleSelectAll}
+          className="text-slate-400 hover:text-slate-700 transition-colors"
+          title={selectedIds.length === questions.length ? 'Deselect all' : 'Select all'}
+        >
+          {questions.length > 0 && selectedIds.length === questions.length ? (
+            <CheckSquare size={16} className="text-indigo-600" />
+          ) : (
+            <Square size={16} />
+          )}
+        </button>
+      ),
+      render: (r) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleSelectOne(r._id);
+          }}
+          className="text-slate-400 hover:text-indigo-600 transition-colors"
+        >
+          {selectedIds.includes(r._id) ? (
+            <CheckSquare size={16} className="text-indigo-600" />
+          ) : (
+            <Square size={16} />
+          )}
+        </button>
+      ),
+    },
+    ...(isMcq
+      ? [
+          {
+            key: 'field1',
+            label: 'Question',
+            render: (r) => (
+              <div>
+                <p className="font-semibold text-slate-900">{r.field1 || '—'}</p>
+                {r.hint && (
+                  <p className="mt-0.5 flex items-center gap-1 text-xs text-amber-700">
+                    <span className="font-medium">💡 Hint:</span> {r.hint}
+                  </p>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: 'options',
+            label: 'Options',
+            render: (r) => (
+              <div className="flex flex-wrap gap-1">
+                {['A', 'B', 'C', 'D'].map((letter) => {
+                  const val = r[`option${letter}`];
+                  if (!val) return null;
+                  return (
+                    <span
+                      key={letter}
+                      className={r.correctAnswer === letter ? 'badge-primary text-[11px]' : 'badge-neutral text-[11px]'}
+                    >
+                      {letter}: {val}
+                    </span>
+                  );
+                })}
+              </div>
+            ),
+          },
+          {
+            key: 'correctAnswer',
+            label: 'Answer',
+            render: (r) => <span className="badge-primary font-bold">{r.correctAnswer || '—'}</span>,
+          },
+        ]
+      : [
+          {
+            key: 'field1',
+            label: labels.field1,
+            render: (r) => <span className="font-semibold text-slate-900">{r.field1 || '—'}</span>,
+          },
+          { key: 'field2', label: labels.field2, render: (r) => <span className="text-slate-600">{r.field2 || '—'}</span> },
+          { key: 'field3', label: labels.field3, render: (r) => <span className="text-slate-500">{r.field3 || '—'}</span> },
+        ]),
+    {
+      key: 'actions',
+      label: '',
+      render: (r) => (
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => openEdit(r)}
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors"
+            title="Edit"
+          >
+            <Pencil size={15} />
+          </button>
+          <button
+            onClick={() => setDeleteTarget(r)}
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+            title="Delete"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
+      {/* Top Header Card */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div className="flex items-start gap-3">
           <button
             onClick={() => navigate('/projects')}
-            className="mt-0.5 rounded-lg p-2 text-muted transition-colors hover:bg-primary-50 hover:text-primary-700"
+            className="mt-1 rounded-xl border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50 transition-colors"
             aria-label="Back to projects"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={16} />
           </button>
           <div className="min-w-0">
-            <h2 className="text-lg font-bold text-ink">{project.name}</h2>
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              {['field1', 'field2', 'field3'].map((key) => (
-                <span key={key} className={key === project.mainQuestionField ? 'badge-primary' : 'badge-neutral'}>
-                  {labels[key]}
-                </span>
-              ))}
-              {isMcq && <span className="badge-accent">MCQ</span>}
-              <code className="chip-mono">{project.slug}</code>
+            <div className="flex items-center gap-2">
+              <h2 className="font-heading text-xl font-bold text-slate-900">{project.name}</h2>
+              <span
+                className={`rounded-lg px-2 py-0.5 text-xs font-bold uppercase ${
+                  isMcq ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700'
+                }`}
+              >
+                {isMcq ? 'MCQ Quiz' : 'Classic'}
+              </span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <code>{project.slug}</code>
+              <span>•</span>
+              <span>Serves <strong>{project.questionsPerQuiz}</strong> questions per session</span>
             </div>
           </div>
         </div>
+
+        {/* Header Action Buttons */}
         <div className="flex flex-wrap items-center gap-2">
-          <motion.button whileTap={{ scale: 0.97 }} onClick={() => setConnectOpen(true)} className="btn-secondary">
-            <Plug size={16} />
-            Connect a game
-          </motion.button>
-          <motion.button whileTap={{ scale: 0.97 }} onClick={() => setUploadOpen(true)} className="btn-secondary">
-            <Upload size={16} />
-            Import
-          </motion.button>
-          <motion.button whileTap={{ scale: 0.97 }} onClick={openAdd} className="btn-primary">
-            <Plus size={16} />
-            Add question
-          </motion.button>
+          <button
+            onClick={() => setSimulatorOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-indigo-500/20 hover:scale-105 transition-all"
+          >
+            <Play size={13} className="fill-white" />
+            <span>Play Test</span>
+          </button>
+
+          <button onClick={() => setConnectOpen(true)} className="btn-secondary text-xs">
+            <Plug size={14} />
+            <span>Connect</span>
+          </button>
+
+          <div className="flex items-center rounded-xl border border-slate-200 bg-white p-0.5">
+            <button
+              onClick={handleExportJSON}
+              title="Export to JSON"
+              className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              <FileJson size={13} className="text-amber-600" />
+              <span>JSON</span>
+            </button>
+            <span className="text-slate-200">|</span>
+            <button
+              onClick={handleExportCSV}
+              title="Export to CSV"
+              className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              <FileSpreadsheet size={13} className="text-emerald-600" />
+              <span>CSV</span>
+            </button>
+          </div>
+
+          <button onClick={() => setUploadOpen(true)} className="btn-secondary text-xs">
+            <Upload size={14} />
+            <span>Import</span>
+          </button>
+
+          <button onClick={openAdd} className="btn-primary text-xs">
+            <Plus size={14} />
+            <span>Add Question</span>
+          </button>
         </div>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-        <input
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="input pl-10"
-          placeholder={isMcq ? 'Search by question' : `Search by ${labels.field1.toLowerCase()}`}
-        />
+      {/* Pool Readiness Banner */}
+      <div
+        className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border p-4 text-xs ${
+          total === 0
+            ? 'border-rose-200 bg-rose-50/70 text-rose-900'
+            : isReady
+            ? 'border-emerald-200 bg-emerald-50/70 text-emerald-900'
+            : 'border-amber-200 bg-amber-50/70 text-amber-900'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          {total === 0 ? (
+            <AlertTriangle size={18} className="text-rose-500 shrink-0" />
+          ) : isReady ? (
+            <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
+          ) : (
+            <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+          )}
+          <div>
+            <p className="font-bold">
+              {total === 0
+                ? 'Question pool is empty'
+                : isReady
+                ? `Ready to serve (${total} questions available in bank)`
+                : `Low question bank (${total} / ${poolRequired} needed for random sessions)`}
+            </p>
+            <p className="mt-0.5 opacity-90">
+              {total === 0
+                ? 'Games connecting to this project will receive empty sessions until questions are added.'
+                : isReady
+                ? `Each game session will randomly select ${poolRequired} questions from your pool of ${total}.`
+                : `We recommend adding at least ${poolRequired - total} more questions to prevent question repetition in games.`}
+            </p>
+          </div>
+        </div>
+
+        {total < poolRequired && (
+          <button
+            onClick={handleSeedSamples}
+            disabled={seedingSamples}
+            className="flex shrink-0 items-center gap-1.5 rounded-xl bg-white px-3.5 py-1.5 font-bold shadow-sm border border-slate-200 text-slate-800 hover:bg-slate-50 transition-all hover:scale-105"
+          >
+            <Sparkles size={13} className="text-indigo-600" />
+            <span>{seedingSamples ? 'Seeding...' : 'Seed 5 Sample Questions'}</span>
+          </button>
+        )}
       </div>
 
+      {/* Search & Bulk Selection Bar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="input pl-10 text-xs"
+            placeholder={isMcq ? 'Search questions by keyword...' : `Search by ${labels.field1.toLowerCase()}...`}
+          />
+        </div>
+
+        {/* Floating Bulk Action Indicator */}
+        <AnimatePresence>
+          {selectedIds.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="flex items-center gap-2 rounded-xl bg-slate-900 px-3.5 py-1.5 text-xs text-white shadow-lg"
+            >
+              <span className="font-semibold">{selectedIds.length} selected</span>
+              <button
+                onClick={() => setBulkConfirmOpen(true)}
+                className="flex items-center gap-1 rounded-lg bg-rose-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-rose-500 transition-colors"
+              >
+                <Trash2 size={12} />
+                <span>Delete</span>
+              </button>
+              <button
+                onClick={() => setSelectedIds([])}
+                className="text-slate-400 hover:text-white text-xs underline"
+              >
+                Clear
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Question Table */}
       <DataTable
         columns={columns}
         data={questions}
@@ -437,91 +718,133 @@ const Questions = () => {
         loading={loading}
         error={loadError}
         onRetry={load}
-        emptyMessage={search ? 'Nothing matches that' : 'This bank is empty'}
-        emptyHint={
-          search
-            ? `No question has a ${labels.field1.toLowerCase()} like that.`
-            : `Add one ${labels.field1.toLowerCase()} at a time, or import a CSV. Your game gets them on its next session.`
-        }
+        emptyMessage={search ? 'No questions match your query' : 'This question bank is empty'}
+        emptyHint="Add questions one by one, import a CSV/Word document, or click below to seed sample questions."
         emptyAction={
           !search && (
-            <button onClick={openAdd} className="btn-primary mt-1">
-              <Plus size={16} />
-              Add the first question
-            </button>
+            <div className="flex flex-wrap gap-2 justify-center mt-2">
+              <button onClick={handleSeedSamples} disabled={seedingSamples} className="btn-secondary text-xs">
+                <Sparkles size={13} className="text-indigo-600" />
+                Seed 5 Sample Questions
+              </button>
+              <button onClick={openAdd} className="btn-primary text-xs">
+                <Plus size={13} />
+                Add Question
+              </button>
+            </div>
           )
         }
       />
 
+      {/* Edit / Create Question Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? 'Edit question' : 'Add question'}
-        description={isMcq ? 'Fill in the question and all four options.' : `Your game asks with ${labels[project.mainQuestionField]}.`}
+        title={editing ? 'Edit Question' : 'Add New Question'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="label">{isMcq ? 'Question text' : labels.field1} (required)</label>
-            <input
-              value={form.field1}
-              onChange={(e) => setForm({ ...form, field1: e.target.value })}
-              className="input"
-              placeholder={isMcq ? 'e.g. Who is India\'s Prime Minister?' : labels.field1}
-              required
-            />
-          </div>
-
           {isMcq ? (
             <>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {['A', 'B', 'C', 'D'].map((letter) => (
-                  <div key={letter}>
-                    <label className="label">Option {letter}</label>
-                    <input
-                      value={form[`option${letter}`]}
-                      onChange={(e) => setForm({ ...form, [`option${letter}`]: e.target.value })}
-                      className="input"
-                      placeholder={`Option ${letter}`}
-                      required
-                    />
-                  </div>
-                ))}
-              </div>
               <div>
-                <label className="label">Correct answer</label>
-                <select
-                  value={form.correctAnswer}
-                  onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
-                  className="input"
+                <label className="label">Question Text</label>
+                <textarea
                   required
-                >
-                  <option value="">Select the correct option</option>
-                  <option value="A">A{form.optionA ? ` — ${form.optionA}` : ''}</option>
-                  <option value="B">B{form.optionB ? ` — ${form.optionB}` : ''}</option>
-                  <option value="C">C{form.optionC ? ` — ${form.optionC}` : ''}</option>
-                  <option value="D">D{form.optionD ? ` — ${form.optionD}` : ''}</option>
-                </select>
+                  rows={3}
+                  value={form.field1}
+                  onChange={(e) => setForm({ ...form, field1: e.target.value })}
+                  className="input text-sm resize-none"
+                  placeholder="e.g. Which country won the 2011 Cricket World Cup?"
+                />
               </div>
 
-              <div>
-                <label className="label">Hint (optional)</label>
-                <input
-                  value={form.hint}
-                  onChange={(e) => setForm({ ...form, hint: e.target.value })}
-                  className="input"
-                  placeholder="e.g. Think about the Red Planet or its atmosphere"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Option A</label>
+                  <input
+                    required
+                    value={form.optionA}
+                    onChange={(e) => setForm({ ...form, optionA: e.target.value })}
+                    className="input text-xs"
+                    placeholder="Option A"
+                  />
+                </div>
+                <div>
+                  <label className="label">Option B</label>
+                  <input
+                    required
+                    value={form.optionB}
+                    onChange={(e) => setForm({ ...form, optionB: e.target.value })}
+                    className="input text-xs"
+                    placeholder="Option B"
+                  />
+                </div>
+                <div>
+                  <label className="label">Option C</label>
+                  <input
+                    required
+                    value={form.optionC}
+                    onChange={(e) => setForm({ ...form, optionC: e.target.value })}
+                    className="input text-xs"
+                    placeholder="Option C"
+                  />
+                </div>
+                <div>
+                  <label className="label">Option D</label>
+                  <input
+                    required
+                    value={form.optionD}
+                    onChange={(e) => setForm({ ...form, optionD: e.target.value })}
+                    className="input text-xs"
+                    placeholder="Option D"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Correct Answer</label>
+                  <select
+                    required
+                    value={form.correctAnswer}
+                    onChange={(e) => setForm({ ...form, correctAnswer: e.target.value })}
+                    className="input text-xs font-bold"
+                  >
+                    <option value="">Select Answer</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Hint (Optional)</label>
+                  <input
+                    value={form.hint}
+                    onChange={(e) => setForm({ ...form, hint: e.target.value })}
+                    className="input text-xs"
+                    placeholder="Clue for players"
+                  />
+                </div>
               </div>
             </>
           ) : (
             <>
               <div>
-                <label className="label">{labels.field2}</label>
+                <label className="label">{labels.field1}</label>
                 <input
+                  required
+                  value={form.field1}
+                  onChange={(e) => setForm({ ...form, field1: e.target.value })}
+                  className="input text-sm"
+                />
+              </div>
+              <div>
+                <label className="label">{labels.field2}</label>
+                <textarea
+                  rows={2}
                   value={form.field2}
                   onChange={(e) => setForm({ ...form, field2: e.target.value })}
-                  className="input"
-                  placeholder={labels.field2}
+                  className="input text-sm resize-none"
                 />
               </div>
               <div>
@@ -529,316 +852,140 @@ const Questions = () => {
                 <input
                   value={form.field3}
                   onChange={(e) => setForm({ ...form, field3: e.target.value })}
-                  className="input"
-                  placeholder={labels.field3}
+                  className="input text-sm"
                 />
               </div>
             </>
           )}
 
-          <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">
+          <div className="flex justify-end gap-2 pt-3">
+            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary text-xs">
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? 'Saving…' : editing ? 'Save changes' : 'Add question'}
+            <button type="submit" disabled={saving} className="btn-primary text-xs">
+              {saving ? 'Saving...' : editing ? 'Save Changes' : 'Add Question'}
             </button>
           </div>
         </form>
       </Modal>
 
-      <Modal
-        isOpen={connectOpen}
-        onClose={() => setConnectOpen(false)}
-        title={`Connect a game to ${project.name}`}
-        description="Point your game at this endpoint and it pulls questions live."
-        size="lg"
-      >
-        <ConnectGame project={project} />
-      </Modal>
-
-      {/* File Picker Modal */}
-      <Modal
-        isOpen={uploadOpen}
-        onClose={() => {
-          setUploadOpen(false);
-          setFile(null);
-        }}
-        title="Import questions"
-        description="CSV shows a preview and lets you map columns first. DOCX is parsed on the server."
-      >
+      {/* Upload File Modal */}
+      <Modal isOpen={uploadOpen} onClose={() => setUploadOpen(false)} title="Import Question Bank">
         <div className="space-y-4">
-          <div className="rounded-2xl border-2 border-dashed border-primary-200 bg-brand-soft p-6 text-center">
-            <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-panel text-primary-500 shadow-card">
-              <FileUp size={22} />
-            </div>
-            <p className="mt-3 text-sm text-muted">Choose a .csv or .docx file</p>
-            <input
-              type="file"
-              accept=".csv,.docx"
-              onChange={handleFileSelected}
-              className="mx-auto mt-3 block w-full text-sm text-muted file:mr-4 file:rounded-xl file:border-0 file:bg-primary-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary-700"
-            />
-          </div>
-          <div className="rounded-xl border border-line bg-surface px-3.5 py-3">
-            {isMcq ? (
-              <div className="space-y-1 text-xs text-muted">
-                <p className="font-semibold text-ink">Supported DOCX & CSV format for MCQ with Hint:</p>
-                <div className="rounded bg-panel p-2 font-mono text-[11px] text-primary-700">
-                  1. Question text?<br />
-                  A) Option 1<br />
-                  B) Option 2<br />
-                  C) Option 3<br />
-                  D) Option 4<br />
-                  Hint: Clue for this question<br />
-                  Answer: D
-                </div>
-                <p>Or tables with 6-7 columns: Question | Option A | Option B | Option C | Option D | Answer | Hint</p>
-              </div>
-            ) : (
-              <p className="text-xs text-muted">
-                The first three columns map to <span className="font-semibold text-ink">{labels.field1}</span>,{' '}
-                <span className="font-semibold text-ink">{labels.field2}</span> and{' '}
-                <span className="font-semibold text-ink">{labels.field3}</span>. You can change that on the next step.
-              </p>
-            )}
-          </div>
-          <div className="flex justify-end">
-            <button
-              onClick={() => {
-                setUploadOpen(false);
-                setFile(null);
-              }}
-              className="btn-secondary"
-            >
-              Cancel
-            </button>
+          <p className="text-xs text-slate-500">
+            Upload a <strong>CSV spreadsheet</strong> or <strong>Word (.docx) document</strong> to bulk import questions into this game.
+          </p>
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 p-8 text-center hover:border-indigo-500 transition-colors">
+            <FileUp size={36} className="text-indigo-500" />
+            <label className="btn-primary mt-4 cursor-pointer text-xs font-semibold">
+              <span>Choose CSV or DOCX file</span>
+              <input
+                type="file"
+                accept=".csv,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/csv"
+                onChange={handleFileSelected}
+                className="sr-only"
+              />
+            </label>
           </div>
         </div>
       </Modal>
 
-      {/* Preview & Column Mapping Modal */}
-      <Modal
-        isOpen={previewOpen}
-        onClose={() => {
-          setPreviewOpen(false);
-          setFile(null);
-          setPreviewData([]);
-          setDetectedHeaders([]);
-        }}
-        title="Preview and import"
-        size="xl"
-      >
-        <div className="space-y-5">
-          {/* Column Mapping */}
-          {!isDocx && detectedHeaders.length > 0 && (
-            <div>
-              <div className="mb-3 flex items-center gap-2">
-                <Columns3 size={16} className="text-primary-600" />
-                <h4 className="text-sm font-bold text-ink">Column mapping</h4>
-              </div>
-              <p className="mb-3 text-xs text-muted">
-                Pick which column feeds each field. The preview below updates as you change it.
-              </p>
-              <div className={`grid grid-cols-1 gap-3 sm:grid-cols-${isMcq ? '3' : '3'}`}>
-                {(isMcq
-                  ? [
-                      { key: 'field1', label: 'Question' },
-                      { key: 'optionA', label: 'Option A' },
-                      { key: 'optionB', label: 'Option B' },
-                      { key: 'optionC', label: 'Option C' },
-                      { key: 'optionD', label: 'Option D' },
-                      { key: 'correctAnswer', label: 'Correct Answer' },
-                      { key: 'hint', label: 'Hint' },
-                    ]
-                  : [
-                      { key: 'field1', label: labels.field1 },
-                      { key: 'field2', label: labels.field2 },
-                      { key: 'field3', label: labels.field3 },
-                    ]
-                ).map((field) => (
-                  <div key={field.key} className="rounded-xl border border-line bg-surface p-3">
-                    <label className="label mb-1.5 text-primary-700">{field.label}</label>
-                    <select
-                      value={columnMapping[field.key]}
-                      onChange={(e) =>
-                        setColumnMapping({ ...columnMapping, [field.key]: Number(e.target.value) })
-                      }
-                      className="input py-1.5 text-sm"
-                    >
-                      {detectedHeaders.map((h, i) => (
-                        <option key={i} value={i}>
-                          Col {i + 1}: {h}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
-              </div>
+      {/* CSV Column Mapping Preview Modal */}
+      <Modal isOpen={previewOpen} onClose={() => setPreviewOpen(false)} title="Confirm File Import">
+        <div className="space-y-4">
+          <p className="text-xs text-slate-600">
+            File: <strong>{file?.name}</strong>. Confirm column associations before inserting into MySQL.
+          </p>
+
+          {isMcq ? (
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {['field1', 'optionA', 'optionB', 'optionC', 'optionD', 'correctAnswer', 'hint'].map((key) => (
+                <div key={key}>
+                  <label className="font-semibold capitalize text-slate-700">{key}</label>
+                  <select
+                    value={columnMapping[key] ?? 0}
+                    onChange={(e) => setColumnMapping({ ...columnMapping, [key]: Number(e.target.value) })}
+                    className="input mt-1 text-xs"
+                  >
+                    {detectedHeaders.map((h, i) => (
+                      <option key={i} value={i}>
+                        {h} (Col {i + 1})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              {['field1', 'field2', 'field3'].map((key) => (
+                <div key={key}>
+                  <label className="font-semibold text-slate-700">{labels[key]}</label>
+                  <select
+                    value={columnMapping[key] ?? 0}
+                    onChange={(e) => setColumnMapping({ ...columnMapping, [key]: Number(e.target.value) })}
+                    className="input mt-1 text-xs"
+                  >
+                    {detectedHeaders.map((h, i) => (
+                      <option key={i} value={i}>
+                        {h} (Col {i + 1})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Preview Table */}
-          {!isDocx && previewRows.length > 0 ? (
-            <div>
-              <h4 className="mb-2 text-sm font-bold text-ink">
-                Preview — {previewData.length} row{previewData.length === 1 ? '' : 's'}
-                {previewData.length > 10 ? ', first 10 shown' : ''}
-              </h4>
-              <div className="overflow-x-auto rounded-xl border border-line">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-line bg-surface">
-                      {isMcq ? (
-                        <>
-                          <th className="table-header">Question</th>
-                          <th className="table-header">Opt A</th>
-                          <th className="table-header">Opt B</th>
-                          <th className="table-header">Opt C</th>
-                          <th className="table-header">Opt D</th>
-                          <th className="table-header">Answer</th>
-                          <th className="table-header">Hint</th>
-                        </>
-                      ) : (
-                        ['field1', 'field2', 'field3'].map((field) => (
-                          <th key={field} className="table-header">
-                            {labels[field]}
-                          </th>
-                        ))
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {previewRows.map((row, idx) => (
-                      <motion.tr
-                        key={idx}
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.15, delay: idx * 0.02 }}
-                        className="border-b border-line/60 last:border-0"
-                      >
-                        {isMcq ? (
-                          <>
-                            <td className="px-4 py-2 font-semibold text-ink">
-                              {row[columnMapping.field1] || <span className="text-muted/50">—</span>}
-                            </td>
-                            <td className="px-4 py-2 text-muted">
-                              {row[columnMapping.optionA] || <span className="text-muted/50">—</span>}
-                            </td>
-                            <td className="px-4 py-2 text-muted">
-                              {row[columnMapping.optionB] || <span className="text-muted/50">—</span>}
-                            </td>
-                            <td className="px-4 py-2 text-muted">
-                              {row[columnMapping.optionC] || <span className="text-muted/50">—</span>}
-                            </td>
-                            <td className="px-4 py-2 text-muted">
-                              {row[columnMapping.optionD] || <span className="text-muted/50">—</span>}
-                            </td>
-                            <td className="px-4 py-2 font-bold text-primary-700">
-                              {row[columnMapping.correctAnswer] || <span className="text-muted/50">—</span>}
-                            </td>
-                            <td className="px-4 py-2 text-xs text-muted">
-                              {row[columnMapping.hint] || <span className="text-muted/50">—</span>}
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="px-4 py-2 font-semibold text-ink">
-                              {row[columnMapping.field1] || <span className="text-muted/50">—</span>}
-                            </td>
-                            <td className="px-4 py-2 text-muted">
-                              {row[columnMapping.field2] || <span className="text-muted/50">—</span>}
-                            </td>
-                            <td className="px-4 py-2 text-muted">
-                              {row[columnMapping.field3] || <span className="text-muted/50">—</span>}
-                            </td>
-                          </>
-                        )}
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : isDocx ? (
-            <div className="rounded-xl border border-primary-200 bg-brand-soft p-4">
-              <p className="text-sm text-primary-900">
-                {isMcq ? (
-                  <>
-                    Word DOCX will be automatically parsed into <span className="font-semibold">Question, 4 Options (A, B, C, D)</span> and <span className="font-semibold">Correct Answer</span>.
-                  </>
-                ) : (
-                  <>
-                    DOCX will be parsed on the server and mapped to <span className="font-semibold">{labels.field1}</span>, <span className="font-semibold">{labels.field2}</span> and <span className="font-semibold">{labels.field3}</span>.
-                  </>
-                )}
-              </p>
-              <p className="mt-2 text-xs text-muted">
-                {file?.name} · {(file?.size / 1024).toFixed(1)} KB
-              </p>
-            </div>
-          ) : null}
-
-          {/* Actions */}
-          <div className="flex items-center justify-between pt-2">
-            <button
-              onClick={() => {
-                setPreviewOpen(false);
-                setUploadOpen(true);
-                setFile(null);
-                setPreviewData([]);
-                setDetectedHeaders([]);
-              }}
-              className="btn-secondary"
-            >
-              <ArrowLeft size={16} />
-              Back
+          <div className="flex justify-end gap-2 pt-3">
+            <button type="button" onClick={() => setPreviewOpen(false)} className="btn-secondary text-xs">
+              Cancel
             </button>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setPreviewOpen(false);
-                  setFile(null);
-                  setPreviewData([]);
-                  setDetectedHeaders([]);
-                }}
-                className="btn-secondary"
-              >
-                Cancel
-              </button>
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={handleConfirmUpload}
-                className="btn-primary"
-                disabled={uploading}
-              >
-                {uploading ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Importing…
-                  </>
-                ) : (
-                  <>
-                    <ArrowRight size={16} />
-                    Import {previewData.length > 0 ? `${previewData.length} rows` : 'file'}
-                  </>
-                )}
-              </motion.button>
-            </div>
+            <button type="button" onClick={handleConfirmUpload} disabled={uploading} className="btn-primary text-xs">
+              {uploading ? 'Importing...' : 'Confirm & Insert'}
+            </button>
           </div>
         </div>
       </Modal>
 
+      {/* Connect Game Modal */}
+      {connectOpen && (
+        <Modal isOpen={connectOpen} onClose={() => setConnectOpen(false)} title={`Connect Game: ${project.name}`}>
+          <ConnectGame
+            project={project}
+            onProjectUpdate={(updated) => setProject(updated)}
+          />
+        </Modal>
+      )}
+
+      {/* Game Simulator Modal */}
+      <GameSimulatorModal
+        isOpen={simulatorOpen}
+        onClose={() => setSimulatorOpen(false)}
+        project={project}
+      />
+
+      {/* Delete Single Question */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Delete question"
-        message={`"${deleteTarget?.field1 || 'This question'}" will be removed from the bank. This can't be undone.`}
+        title="Delete Question"
+        message="Are you sure you want to delete this question? It will no longer appear in game sessions."
+        confirmText="Delete Question"
         loading={deleting}
+      />
+
+      {/* Bulk Delete Confirm */}
+      <ConfirmDialog
+        isOpen={bulkConfirmOpen}
+        onClose={() => setBulkConfirmOpen(false)}
+        onConfirm={handleBulkDelete}
+        title={`Delete ${selectedIds.length} Questions`}
+        message={`Are you sure you want to permanently delete ${selectedIds.length} selected questions from MySQL?`}
+        confirmText="Delete Selected"
+        loading={bulkDeleting}
       />
     </div>
   );
-};
-
-export default Questions;
+}

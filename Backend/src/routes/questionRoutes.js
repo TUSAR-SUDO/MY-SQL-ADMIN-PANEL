@@ -8,6 +8,8 @@ const {
   deleteQuestion,
   uploadQuestions,
   getRecentQuestions,
+  bulkDeleteQuestions,
+  seedSampleQuestions,
 } = require('../controllers/questionController');
 const { protect } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
@@ -49,6 +51,12 @@ router.post(
 
 // Upload CSV/DOCX
 router.post('/projects/:id/questions/upload', upload.single('file'), uploadQuestions);
+
+// Bulk delete questions
+router.post('/projects/:id/questions/bulk-delete', bulkDeleteQuestions);
+
+// Seed sample questions
+router.post('/projects/:id/questions/sample-seed', seedSampleQuestions);
 
 // Update question
 router.put(

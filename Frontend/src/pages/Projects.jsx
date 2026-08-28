@@ -1,13 +1,44 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Pencil, Trash2, ListChecks, Search, Plug, Globe, X } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ListChecks,
+  Search,
+  Plug,
+  Globe,
+  X,
+  Play,
+  LayoutGrid,
+  Table as TableIcon,
+  Sparkles,
+  Gamepad2,
+  CheckCircle2,
+  AlertTriangle,
+  FileQuestion,
+  HelpCircle,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ConnectGame from '../components/ConnectGame';
+import GameSimulatorModal from '../components/GameSimulatorModal';
 import { getProjects, createProject, updateProject, deleteProject } from '../api';
+
+const getProjectEmoji = (name = '') => {
+  const n = name.toLowerCase();
+  if (n.includes('cricket')) return '🏏';
+  if (n.includes('math') || n.includes('calc')) return '🧮';
+  if (n.includes('vocab') || n.includes('word') || n.includes('spell') || n.includes('english')) return '📚';
+  if (n.includes('science') || n.includes('bio') || n.includes('chem') || n.includes('physics')) return '🧪';
+  if (n.includes('history') || n.includes('geo')) return '🏛️';
+  if (n.includes('code') || n.includes('dev') || n.includes('tech')) return '💻';
+  if (n.includes('trivia') || n.includes('quiz') || n.includes('gk')) return '🎯';
+  return '🎮';
+};
 
 const emptyForm = {
   name: '',
@@ -34,12 +65,14 @@ const IconAction = ({ label, onClick, danger, children }) => (
   </button>
 );
 
-const Projects = () => {
+export default function Projects() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('projects_view_mode') || 'grid');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -49,17 +82,21 @@ const Projects = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [connectTarget, setConnectTarget] = useState(null);
+  const [simulatorTarget, setSimulatorTarget] = useState(null);
+
+  const setView = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('projects_view_mode', mode);
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getProjects({ search, page, limit: 10 });
-      setProjects(res.data.projects);
-      setTotal(res.data.total);
+      const res = await getProjects({ search, page, limit: 30 });
+      setProjects(res.data.projects || []);
+      setTotal(res.data.total || 0);
       setLoadError('');
     } catch (err) {
-      // Keep the reason on screen: an empty table and a failed request
-      // should never look the same.
       setLoadError(
         err.response?.data?.message ||
           (err.response ? `The API replied ${err.response.status}.` : 'The API did not respond. Is the backend running?')
@@ -86,11 +123,11 @@ const Projects = () => {
     setForm({
       name: project.name,
       projectType: project.projectType || 'classic',
-      field1: project.fieldLabels.field1,
-      field2: project.fieldLabels.field2,
-      field3: project.fieldLabels.field3,
-      mainQuestionField: project.mainQuestionField,
-      questionsPerQuiz: project.questionsPerQuiz,
+      field1: project.fieldLabels?.field1 || 'Field 1',
+      field2: project.fieldLabels?.field2 || 'Field 2',
+      field3: project.fieldLabels?.field3 || 'Field 3',
+      mainQuestionField: project.mainQuestionField || 'field2',
+      questionsPerQuiz: project.questionsPerQuiz || 15,
       allowedOrigins: project.allowedOrigins || [],
       newOrigin: '',
     });
@@ -139,14 +176,25 @@ const Projects = () => {
     }
   };
 
+  const filteredProjects = projects.filter((p) => {
+    if (typeFilter === 'mcq') return p.projectType === 'mcq';
+    if (typeFilter === 'classic') return p.projectType !== 'mcq';
+    return true;
+  });
+
   const columns = [
     {
       key: 'name',
       label: 'Project',
       render: (r) => (
-        <div className="min-w-0">
-          <p className="font-semibold text-ink">{r.name}</p>
-          <code className="font-mono text-xs text-muted">{r.slug}</code>
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-lg">
+            {getProjectEmoji(r.name)}
+          </span>
+          <div className="min-w-0">
+            <p className="font-semibold text-ink">{r.name}</p>
+            <code className="font-mono text-xs text-muted">{r.slug}</code>
+          </div>
         </div>
       ),
     },
@@ -155,40 +203,49 @@ const Projects = () => {
       label: 'Type',
       render: (r) => (
         <span className={r.projectType === 'mcq' ? 'badge-accent' : 'badge-neutral'}>
-          {r.projectType === 'mcq' ? 'MCQ' : 'Classic'}
+          {r.projectType === 'mcq' ? 'MCQ Quiz' : 'Classic'}
         </span>
       ),
     },
     {
-      key: 'fields',
-      label: 'Fields',
-      render: (r) => (
-        <div className="flex flex-wrap gap-1.5">
-          {r.projectType === 'mcq' ? (
-            <span className="badge-primary">Question + 4 Options</span>
-          ) : (
-            ['field1', 'field2', 'field3'].map((key) => (
-              <span
-                key={key}
-                className={key === r.mainQuestionField ? 'badge-primary' : 'badge-neutral'}
-              >
-                {r.fieldLabels[key]}
-              </span>
-            ))
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'questionsPerQuiz',
-      label: 'Per session',
-      render: (r) => <span className="font-semibold text-ink">{r.questionsPerQuiz}</span>,
+      key: 'health',
+      label: 'Bank Health',
+      render: (r) => {
+        const count = r.questionCount || 0;
+        const required = r.questionsPerQuiz || 15;
+        const isReady = count >= required;
+        return (
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                count === 0
+                  ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                  : isReady
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+              }`}
+            >
+              {count === 0 ? 'Empty' : isReady ? 'Ready' : 'Low Bank'}
+            </span>
+            <span className="text-xs text-slate-500">
+              ({count} / {required})
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: 'actions',
       label: '',
       render: (r) => (
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => setSimulatorTarget(r)}
+            className="flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
+          >
+            <Play size={12} className="fill-indigo-700" />
+            <span>Play Test</span>
+          </button>
           <IconAction label="Connect a game" onClick={() => setConnectTarget(r)}>
             <Plug size={16} />
           </IconAction>
@@ -208,308 +265,388 @@ const Projects = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <div className="relative max-w-sm flex-1">
-          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-          <input
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="input pl-10"
-            placeholder="Search projects"
-          />
+      {/* Top Action Bar */}
+      <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+        <div className="flex flex-1 flex-wrap items-center gap-3">
+          {/* Search */}
+          <div className="relative min-w-[220px] max-w-sm flex-1">
+            <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+            <input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="input pl-10 text-xs"
+              placeholder="Search games & projects..."
+            />
+          </div>
+
+          {/* Type Filter */}
+          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-100/80 p-1 text-xs">
+            <button
+              onClick={() => setTypeFilter('all')}
+              className={`rounded-lg px-3 py-1 font-medium transition-all ${
+                typeFilter === 'all' ? 'bg-white font-bold text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              All ({projects.length})
+            </button>
+            <button
+              onClick={() => setTypeFilter('mcq')}
+              className={`rounded-lg px-3 py-1 font-medium transition-all ${
+                typeFilter === 'mcq' ? 'bg-white font-bold text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              MCQ
+            </button>
+            <button
+              onClick={() => setTypeFilter('classic')}
+              className={`rounded-lg px-3 py-1 font-medium transition-all ${
+                typeFilter === 'classic' ? 'bg-white font-bold text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Classic
+            </button>
+          </div>
         </div>
-        <motion.button whileTap={{ scale: 0.97 }} onClick={openAdd} className="btn-primary">
-          <Plus size={16} />
-          Add project
-        </motion.button>
+
+        <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-100/80 p-1">
+            <button
+              onClick={() => setView('grid')}
+              title="Card Grid View"
+              className={`rounded-lg p-1.5 transition-all ${
+                viewMode === 'grid' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <LayoutGrid size={16} />
+            </button>
+            <button
+              onClick={() => setView('table')}
+              title="Table View"
+              className={`rounded-lg p-1.5 transition-all ${
+                viewMode === 'table' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <TableIcon size={16} />
+            </button>
+          </div>
+
+          <motion.button whileTap={{ scale: 0.97 }} onClick={openAdd} className="btn-primary text-xs">
+            <Plus size={15} />
+            Create Game
+          </motion.button>
+        </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={projects}
-        page={page}
-        total={total}
-        limit={10}
-        onPageChange={setPage}
-        loading={loading}
-        error={loadError}
-        onRetry={load}
-        onRowClick={(r) => navigate(`/projects/${r._id}/questions`)}
-        emptyMessage={search ? 'No project matches that' : 'No projects yet'}
-        emptyHint={
-          search
-            ? 'Try a shorter search term.'
-            : 'A project is one game: its three field labels, how many questions a session serves, and the endpoint your game reads.'
-        }
-        emptyAction={
-          !search && (
-            <button onClick={openAdd} className="btn-primary mt-1">
-              <Plus size={16} />
-              Create your first project
+      {/* Grid Mode */}
+      {viewMode === 'grid' ? (
+        loading ? (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="card h-48 animate-pulse bg-slate-100/80" />
+            ))}
+          </div>
+        ) : filteredProjects.length === 0 ? (
+          <div className="card flex flex-col items-center justify-center p-12 text-center">
+            <Gamepad2 size={40} className="text-slate-300" />
+            <h3 className="mt-3 font-heading text-base font-bold text-slate-800">
+              {search ? 'No matching games found' : 'No game projects yet'}
+            </h3>
+            <p className="mt-1 max-w-sm text-xs text-slate-500">
+              Create your first game project to start managing questions and connecting clients.
+            </p>
+            <button onClick={openAdd} className="btn-primary mt-4 text-xs">
+              <Plus size={14} /> Create Game
             </button>
-          )
-        }
-      />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredProjects.map((p) => {
+              const count = p.questionCount || 0;
+              const required = p.questionsPerQuiz || 15;
+              const isReady = count >= required;
+              const isMcq = p.projectType === 'mcq';
 
+              return (
+                <motion.div
+                  key={p._id}
+                  layout
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="card group relative flex flex-col justify-between overflow-hidden border-slate-200/80 p-5 transition-all hover:border-indigo-300 hover:shadow-xl"
+                >
+                  {/* Top Info */}
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200/60 text-2xl shadow-inner">
+                          {getProjectEmoji(p.name)}
+                        </span>
+                        <div className="min-w-0">
+                          <h3 className="truncate font-heading text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                            {p.name}
+                          </h3>
+                          <code className="chip-mono text-[11px] text-slate-500 font-semibold">{p.slug}</code>
+                        </div>
+                      </div>
+
+                      <span
+                        className={`rounded-lg px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${
+                          isMcq ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {isMcq ? 'MCQ' : 'Classic'}
+                      </span>
+                    </div>
+
+                    {/* Question Health Status */}
+                    <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50/80 p-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500">Question Pool</span>
+                        <span className="font-bold text-slate-800">
+                          {count} <span className="font-normal text-slate-400">/ {required} per quiz</span>
+                        </span>
+                      </div>
+                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                        <div
+                          className={`h-full transition-all ${
+                            isReady ? 'bg-emerald-500' : count > 0 ? 'bg-amber-500' : 'bg-rose-400'
+                          }`}
+                          style={{ width: `${Math.min(100, (count / required) * 100)}%` }}
+                        />
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-[11px]">
+                        <span
+                          className={`flex items-center gap-1 font-semibold ${
+                            count === 0 ? 'text-rose-600' : isReady ? 'text-emerald-600' : 'text-amber-600'
+                          }`}
+                        >
+                          {count === 0 ? (
+                            '❌ Empty Pool'
+                          ) : isReady ? (
+                            <>
+                              <CheckCircle2 size={12} /> Ready for Play
+                            </>
+                          ) : (
+                            <>
+                              <AlertTriangle size={12} /> Low Pool ({required - count} needed)
+                            </>
+                          )}
+                        </span>
+                        {p.allowedOrigins && p.allowedOrigins.length > 0 && (
+                          <span className="text-slate-400" title={p.allowedOrigins.join(', ')}>
+                            🌐 {p.allowedOrigins.length} game client{p.allowedOrigins.length === 1 ? '' : 's'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions Footer */}
+                  <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setSimulatorTarget(p)}
+                        className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-indigo-500/20 hover:bg-indigo-700 transition-all hover:scale-105"
+                      >
+                        <Play size={12} className="fill-white" />
+                        <span>Play Test</span>
+                      </button>
+                      <button
+                        onClick={() => navigate(`/projects/${p._id}/questions`)}
+                        className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <ListChecks size={13} />
+                        <span>Questions</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <IconAction label="Connect a game" onClick={() => setConnectTarget(p)}>
+                        <Plug size={15} />
+                      </IconAction>
+                      <IconAction label="Configure" onClick={() => openEdit(p)}>
+                        <Pencil size={15} />
+                      </IconAction>
+                      <IconAction label="Delete" danger onClick={() => setDeleteTarget(p)}>
+                        <Trash2 size={15} />
+                      </IconAction>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )
+      ) : (
+        /* Table Mode */
+        <DataTable
+          columns={columns}
+          data={filteredProjects}
+          page={page}
+          total={total}
+          limit={10}
+          onPageChange={setPage}
+          loading={loading}
+          error={loadError}
+          onRetry={load}
+          onRowClick={(r) => navigate(`/projects/${r._id}/questions`)}
+          emptyMessage={search ? 'No project matches that' : 'No projects yet'}
+          emptyHint="A project is one game: its field labels, question limits, and API endpoint."
+        />
+      )}
+
+      {/* Edit / Create Project Modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? 'Configure project' : 'Add project'}
-        description={
-          editing
-            ? 'Field labels apply to every question in this bank.'
-            : 'Name it after the game, then label the three fields your questions use.'
-        }
+        title={editing ? `Configure: ${editing.name}` : 'Create New Game Project'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="label">Project name</label>
+            <label className="label">Game / Project Name</label>
             <input
+              required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="input"
-              placeholder="e.g. Vocab Kicker"
-              required
+              className="input text-sm"
+              placeholder="e.g. Cricket World Cup Trivia"
             />
-            <p className="hint">The slug your game uses is generated from this name.</p>
           </div>
 
           <div>
-            <label className="label">Project type</label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, projectType: 'classic' })}
-                className={`flex-1 rounded-xl border-2 px-4 py-3 text-center text-sm font-semibold transition-all ${
-                  form.projectType === 'classic'
-                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                    : 'border-line bg-surface text-muted hover:border-primary-200'
-                }`}
-              >
-                <span className="block text-base">📝</span>
-                Classic
-                <span className="mt-0.5 block text-xs font-normal opacity-70">3 custom fields</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, projectType: 'mcq' })}
-                className={`flex-1 rounded-xl border-2 px-4 py-3 text-center text-sm font-semibold transition-all ${
+            <label className="label">Game Type</label>
+            <div className="grid grid-cols-2 gap-3">
+              <label
+                className={`flex cursor-pointer flex-col rounded-xl border p-3.5 transition-all ${
                   form.projectType === 'mcq'
-                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                    : 'border-line bg-surface text-muted hover:border-primary-200'
+                    ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-500/20'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
                 }`}
               >
-                <span className="block text-base">🔘</span>
-                MCQ
-                <span className="mt-0.5 block text-xs font-normal opacity-70">Question + 4 options</span>
-              </button>
+                <input
+                  type="radio"
+                  name="projectType"
+                  value="mcq"
+                  checked={form.projectType === 'mcq'}
+                  onChange={() => setForm({ ...form, projectType: 'mcq' })}
+                  className="sr-only"
+                />
+                <span className="text-sm font-bold text-slate-900">MCQ Quiz</span>
+                <span className="mt-1 text-xs text-slate-500">Question with 4 options (A, B, C, D) + Correct Answer + Hint</span>
+              </label>
+
+              <label
+                className={`flex cursor-pointer flex-col rounded-xl border p-3.5 transition-all ${
+                  form.projectType === 'classic'
+                    ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-500/20'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="projectType"
+                  value="classic"
+                  checked={form.projectType === 'classic'}
+                  onChange={() => setForm({ ...form, projectType: 'classic' })}
+                  className="sr-only"
+                />
+                <span className="text-sm font-bold text-slate-900">Classic Prompt / Answer</span>
+                <span className="mt-1 text-xs text-slate-500">Custom 3 fields (e.g. Word, Definition, Hint)</span>
+              </label>
             </div>
           </div>
 
           {form.projectType === 'classic' && (
-            <>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div>
-                <label className="label">Field 1 label</label>
-                <input
-                  value={form.field1}
-                  onChange={(e) => setForm({ ...form, field1: e.target.value })}
-                  className="input"
-                  placeholder="Word"
-                  required
-                />
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-600">Custom Field Labels</p>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600">Field 1</label>
+                  <input
+                    value={form.field1}
+                    onChange={(e) => setForm({ ...form, field1: e.target.value })}
+                    className="input text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600">Field 2</label>
+                  <input
+                    value={form.field2}
+                    onChange={(e) => setForm({ ...form, field2: e.target.value })}
+                    className="input text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600">Field 3</label>
+                  <input
+                    value={form.field3}
+                    onChange={(e) => setForm({ ...form, field3: e.target.value })}
+                    className="input text-xs"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="label">Field 2 label</label>
-                <input
-                  value={form.field2}
-                  onChange={(e) => setForm({ ...form, field2: e.target.value })}
-                  className="input"
-                  placeholder="Definition"
-                  required
-                />
-              </div>
-              <div>
-                <label className="label">Field 3 label</label>
-                <input
-                  value={form.field3}
-                  onChange={(e) => setForm({ ...form, field3: e.target.value })}
-                  className="input"
-                  placeholder="Hint"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="label">Questions per session</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={form.questionsPerQuiz}
-                  onChange={(e) => setForm({ ...form, questionsPerQuiz: e.target.value })}
-                  className="input"
-                  required
-                />
-                <p className="hint">How many the endpoint returns, chosen at random each call.</p>
-              </div>
-              <div>
-                <label className="label">Field the game asks with</label>
-                <select
-                  value={form.mainQuestionField}
-                  onChange={(e) => setForm({ ...form, mainQuestionField: e.target.value })}
-                  className="input"
-                >
-                  <option value="field1">{form.field1}</option>
-                  <option value="field2">{form.field2}</option>
-                  <option value="field3">{form.field3}</option>
-                </select>
-                <p className="hint">Sent as `mainQuestionField` so the game knows the prompt.</p>
-              </div>
-            </div>
-            </>
-          )}
-
-          {form.projectType === 'mcq' && (
-            <div>
-              <label className="label">Questions per session</label>
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={form.questionsPerQuiz}
-                onChange={(e) => setForm({ ...form, questionsPerQuiz: e.target.value })}
-                className="input"
-                required
-              />
-              <p className="hint">How many MCQs the endpoint returns per call.</p>
             </div>
           )}
 
           <div>
-            <label className="label">Allowed game origins</label>
-            <div className="flex gap-2">
-              <input
-                value={form.newOrigin || ''}
-                onChange={(e) => setForm({ ...form, newOrigin: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const url = (form.newOrigin || '').trim().replace(/\/$/, '');
-                    if (!url) return;
-                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                      toast.error('Enter a full URL starting with https://');
-                      return;
-                    }
-                    if (form.allowedOrigins.includes(url)) {
-                      toast.error('Already added');
-                      return;
-                    }
-                    setForm({ ...form, allowedOrigins: [...form.allowedOrigins, url], newOrigin: '' });
-                  }
-                }}
-                className="input flex-1"
-                placeholder="https://my-game.vercel.app"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const url = (form.newOrigin || '').trim().replace(/\/$/, '');
-                  if (!url) return;
-                  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                    toast.error('Enter a full URL starting with https://');
-                    return;
-                  }
-                  if (form.allowedOrigins.includes(url)) {
-                    toast.error('Already added');
-                    return;
-                  }
-                  setForm({ ...form, allowedOrigins: [...form.allowedOrigins, url], newOrigin: '' });
-                }}
-                className="btn-secondary px-3"
-              >
-                <Plus size={16} />
-              </button>
-            </div>
-            <p className="hint">
-              Add the game's URL so CORS allows it to fetch questions from this project.
-            </p>
-            {form.allowedOrigins && form.allowedOrigins.length > 0 && (
-              <div className="mt-2 space-y-1.5">
-                {form.allowedOrigins.map((origin) => (
-                  <div
-                    key={origin}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-line bg-surface px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Globe size={12} className="shrink-0 text-primary-500" />
-                      <code className="truncate font-mono text-xs text-ink">{origin}</code>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setForm({
-                          ...form,
-                          allowedOrigins: form.allowedOrigins.filter((o) => o !== origin),
-                        })
-                      }
-                      className="shrink-0 rounded p-0.5 text-muted hover:bg-red-50 hover:text-red-600"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <label className="label">Questions Per Quiz Session</label>
+            <input
+              type="number"
+              min="1"
+              max="100"
+              required
+              value={form.questionsPerQuiz}
+              onChange={(e) => setForm({ ...form, questionsPerQuiz: e.target.value })}
+              className="input text-sm"
+            />
+            <p className="hint">How many random questions the <code>/session</code> API returns on each call.</p>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary">
+          <div className="flex justify-end gap-2 pt-3">
+            <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary text-xs">
               Cancel
             </button>
-            <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? 'Saving…' : editing ? 'Save changes' : 'Create project'}
+            <button type="submit" disabled={saving} className="btn-primary text-xs">
+              {saving ? 'Saving...' : editing ? 'Save Changes' : 'Create Project'}
             </button>
           </div>
         </form>
       </Modal>
 
-      <Modal
-        isOpen={!!connectTarget}
-        onClose={() => setConnectTarget(null)}
-        title={`Connect a game to ${connectTarget?.name || ''}`}
-        description="Point your game at this endpoint and it pulls questions live."
-        size="lg"
-      >
-        {connectTarget && (
+      {/* Connect Game Modal */}
+      {connectTarget && (
+        <Modal isOpen={!!connectTarget} onClose={() => setConnectTarget(null)} title={`Connect Game: ${connectTarget.name}`}>
           <ConnectGame
             project={connectTarget}
             onProjectUpdate={(updated) => {
               setConnectTarget(updated);
-              setProjects((prev) =>
-                prev.map((p) => (p._id === updated._id ? { ...p, allowedOrigins: updated.allowedOrigins } : p))
-              );
+              setProjects((prev) => prev.map((p) => (p._id === updated._id ? { ...p, allowedOrigins: updated.allowedOrigins } : p)));
             }}
           />
-        )}
-      </Modal>
+        </Modal>
+      )}
 
+      {/* Live Game Simulator Modal */}
+      <GameSimulatorModal
+        isOpen={!!simulatorTarget}
+        onClose={() => setSimulatorTarget(null)}
+        project={simulatorTarget}
+      />
+
+      {/* Delete Confirmation */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
-        title="Delete project"
-        message={`"${deleteTarget?.name}" and every question in it will be removed, and any game reading its endpoint will start getting 404s. This can't be undone.`}
+        title="Delete Project"
+        message={`Are you sure you want to delete "${deleteTarget?.name}"? All associated questions will be permanently deleted.`}
+        confirmText="Delete Project"
         loading={deleting}
       />
     </div>
   );
-};
-
-export default Projects;
+}

@@ -413,40 +413,182 @@ const parseDocx = async (buffer, isMcq = false) => {
   });
 };
 
-// @desc    Get recent questions across all projects
-// @route   GET /api/questions/recent
+// @desc    Bulk delete questions
+// @route   POST /api/projects/:id/questions/bulk-delete
 // @access  Private
-const getRecentQuestions = async (req, res) => {
-  const limit = Math.min(Number(req.query.limit) || 10, 50);
-  const questions = await prisma.question.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-    include: {
-      project: {
-        select: { name: true, fieldLabelField1: true, fieldLabelField2: true, fieldLabelField3: true, projectType: true },
-      },
+const bulkDeleteQuestions = async (req, res) => {
+  const projectId = Number(req.params.id);
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ message: 'No question IDs provided' });
+  }
+  const numericIds = ids.map(Number).filter((n) => !isNaN(n));
+  const result = await prisma.question.deleteMany({
+    where: {
+      projectId,
+      id: { in: numericIds },
     },
   });
-  const result = questions.map((q) => ({
-    _id: q.id,
-    field1: q.field1,
-    field2: q.field2,
-    field3: q.field3,
-    optionA: q.optionA,
-    optionB: q.optionB,
-    optionC: q.optionC,
-    optionD: q.optionD,
-    correctAnswer: q.correctAnswer,
-    projectName: q.project?.name || 'Unknown',
-    projectType: q.project?.projectType || 'classic',
-    fieldLabels: {
-      field1: q.project?.fieldLabelField1 || 'Field 1',
-      field2: q.project?.fieldLabelField2 || 'Field 2',
-      field3: q.project?.fieldLabelField3 || 'Field 3',
-    },
-    createdAt: q.createdAt,
+  res.json({ message: `Removed ${result.count} questions`, count: result.count });
+};
+
+// @desc    Seed curated sample questions for instant game testing
+// @route   POST /api/projects/:id/questions/sample-seed
+// @access  Private
+const seedSampleQuestions = async (req, res) => {
+  const projectId = Number(req.params.id);
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) {
+    return res.status(404).json({ message: 'Project not found' });
+  }
+
+  const isMcq = project.projectType === 'mcq';
+  const nameLower = project.name.toLowerCase();
+
+  let samples = [];
+  if (isMcq) {
+    if (nameLower.includes('cricket')) {
+      samples = [
+        {
+          field1: 'How many players are on the field in a standard cricket team?',
+          optionA: '9',
+          optionB: '10',
+          optionC: '11',
+          optionD: '12',
+          correctAnswer: 'C',
+          hint: 'Same number as in association football (soccer).',
+        },
+        {
+          field1: 'Which cricketer has scored 100 international centuries?',
+          optionA: 'Virat Kohli',
+          optionB: 'Sachin Tendulkar',
+          optionC: 'Ricky Ponting',
+          optionD: 'Brian Lara',
+          correctAnswer: 'B',
+          hint: 'Known as the "Master Blaster" from India.',
+        },
+        {
+          field1: 'What is the maximum number of overs bowled per bowler in a T20 match?',
+          optionA: '2',
+          optionB: '4',
+          optionC: '5',
+          optionD: '10',
+          correctAnswer: 'B',
+          hint: 'One-fifth of the total 20 overs.',
+        },
+        {
+          field1: 'What is it called when a bowler takes 3 wickets on 3 consecutive deliveries?',
+          optionA: 'Maiden',
+          optionB: 'Brace',
+          optionC: 'Hat-trick',
+          optionD: 'Five-for',
+          correctAnswer: 'C',
+          hint: 'A term borrowed from 19th century British custom of presenting a new hat.',
+        },
+        {
+          field1: 'Which country won the inaugural ICC Men\'s T20 World Cup in 2007?',
+          optionA: 'Pakistan',
+          optionB: 'Australia',
+          optionC: 'India',
+          optionD: 'West Indies',
+          correctAnswer: 'C',
+          hint: 'Captained by MS Dhoni in South Africa.',
+        },
+      ];
+    } else {
+      samples = [
+        {
+          field1: 'Which planet is known as the Red Planet?',
+          optionA: 'Venus',
+          optionB: 'Mars',
+          optionC: 'Jupiter',
+          optionD: 'Saturn',
+          correctAnswer: 'B',
+          hint: 'Named after the Roman god of war.',
+        },
+        {
+          field1: 'What is the capital city of France?',
+          optionA: 'Berlin',
+          optionB: 'Madrid',
+          optionC: 'Rome',
+          optionD: 'Paris',
+          correctAnswer: 'D',
+          hint: 'Home to the Eiffel Tower.',
+        },
+        {
+          field1: 'What is the chemical symbol for Gold?',
+          optionA: 'Ag',
+          optionB: 'Fe',
+          optionC: 'Au',
+          optionD: 'Gd',
+          correctAnswer: 'C',
+          hint: 'From the Latin word Aurum.',
+        },
+        {
+          field1: 'How many continents are there on Earth?',
+          optionA: '5',
+          optionB: '6',
+          optionC: '7',
+          optionD: '8',
+          correctAnswer: 'C',
+          hint: 'Asia, Africa, Americas, Europe, Antarctica, Australia.',
+        },
+        {
+          field1: 'Who painted the Mona Lisa?',
+          optionA: 'Vincent van Gogh',
+          optionB: 'Pablo Picasso',
+          optionC: 'Leonardo da Vinci',
+          optionD: 'Claude Monet',
+          correctAnswer: 'C',
+          hint: 'Italian polymath of the Renaissance.',
+        },
+      ];
+    }
+  } else {
+    samples = [
+      {
+        field1: 'Ephemeral',
+        field2: 'Lasting for a very short time',
+        field3: 'Think of transient beauty, like morning dew.',
+      },
+      {
+        field1: 'Serendipity',
+        field2: 'Finding valuable or agreeable things not sought for',
+        field3: 'A happy, unexpected discovery.',
+      },
+      {
+        field1: 'Resilient',
+        field2: 'Able to withstand or recover quickly from difficult conditions',
+        field3: 'Bouncing back after adversity.',
+      },
+      {
+        field1: 'Eloquent',
+        field2: 'Fluent or persuasive in speaking or writing',
+        field3: 'Articulate and powerful communication.',
+      },
+      {
+        field1: 'Pragmatic',
+        field2: 'Dealing with things sensibly and realistically',
+        field3: 'Focusing on practical results rather than theories.',
+      },
+    ];
+  }
+
+  const docs = samples.map((s) => ({
+    projectId: project.id,
+    field1: s.field1,
+    field2: s.field2 || '',
+    field3: s.field3 || '',
+    optionA: s.optionA || '',
+    optionB: s.optionB || '',
+    optionC: s.optionC || '',
+    optionD: s.optionD || '',
+    correctAnswer: s.correctAnswer || '',
+    hint: s.hint || s.field3 || '',
   }));
-  res.json(result);
+
+  const inserted = await prisma.question.createMany({ data: docs });
+  res.status(201).json({ message: `Seeded ${inserted.count} sample questions`, count: inserted.count });
 };
 
 module.exports = wrapAll({
@@ -456,4 +598,6 @@ module.exports = wrapAll({
   deleteQuestion,
   uploadQuestions,
   getRecentQuestions,
+  bulkDeleteQuestions,
+  seedSampleQuestions,
 });
