@@ -283,11 +283,11 @@ export default function Projects() {
           </div>
 
           {/* Type Filter */}
-          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-100/80 p-1 text-xs">
+          <div className="flex items-center rounded-xl border border-line bg-surface p-1 text-xs">
             <button
               onClick={() => setTypeFilter('all')}
               className={`rounded-lg px-3 py-1 font-medium transition-all ${
-                typeFilter === 'all' ? 'bg-white font-bold text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                typeFilter === 'all' ? 'bg-panel font-bold text-ink shadow-sm' : 'text-muted hover:text-ink'
               }`}
             >
               All ({projects.length})
@@ -295,7 +295,7 @@ export default function Projects() {
             <button
               onClick={() => setTypeFilter('mcq')}
               className={`rounded-lg px-3 py-1 font-medium transition-all ${
-                typeFilter === 'mcq' ? 'bg-white font-bold text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                typeFilter === 'mcq' ? 'bg-panel font-bold text-ink shadow-sm' : 'text-muted hover:text-ink'
               }`}
             >
               MCQ
@@ -303,7 +303,7 @@ export default function Projects() {
             <button
               onClick={() => setTypeFilter('classic')}
               className={`rounded-lg px-3 py-1 font-medium transition-all ${
-                typeFilter === 'classic' ? 'bg-white font-bold text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                typeFilter === 'classic' ? 'bg-panel font-bold text-ink shadow-sm' : 'text-muted hover:text-ink'
               }`}
             >
               Classic
@@ -313,12 +313,12 @@ export default function Projects() {
 
         <div className="flex items-center gap-3">
           {/* View Toggle */}
-          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-100/80 p-1">
+          <div className="flex items-center rounded-xl border border-line bg-surface p-1">
             <button
               onClick={() => setView('grid')}
               title="Card Grid View"
               className={`rounded-lg p-1.5 transition-all ${
-                viewMode === 'grid' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                viewMode === 'grid' ? 'bg-panel text-ink shadow-sm' : 'text-muted hover:text-ink'
               }`}
             >
               <LayoutGrid size={16} />
@@ -327,7 +327,7 @@ export default function Projects() {
               onClick={() => setView('table')}
               title="Table View"
               className={`rounded-lg p-1.5 transition-all ${
-                viewMode === 'table' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                viewMode === 'table' ? 'bg-panel text-ink shadow-sm' : 'text-muted hover:text-ink'
               }`}
             >
               <TableIcon size={16} />
@@ -382,20 +382,20 @@ export default function Projects() {
                   <div>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200/60 text-2xl shadow-inner">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-surface text-2xl shadow-inner border border-line">
                           {getProjectEmoji(p.name)}
                         </span>
                         <div className="min-w-0">
-                          <h3 className="truncate font-heading text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                          <h3 className="truncate font-heading text-base font-bold text-ink group-hover:text-primary-500 transition-colors">
                             {p.name}
                           </h3>
-                          <code className="chip-mono text-[11px] text-slate-500 font-semibold">{p.slug}</code>
+                          <code className="chip-mono text-[11px]">{p.slug}</code>
                         </div>
                       </div>
 
                       <span
                         className={`rounded-lg px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${
-                          isMcq ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700'
+                          isMcq ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300' : 'bg-surface text-muted border border-line'
                         }`}
                       >
                         {isMcq ? 'MCQ' : 'Classic'}
@@ -403,14 +403,14 @@ export default function Projects() {
                     </div>
 
                     {/* Question Health Status */}
-                    <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50/80 p-3">
+                    <div className="mt-5 rounded-xl border border-line bg-surface/50 p-3">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-500">Question Pool</span>
-                        <span className="font-bold text-slate-800">
-                          {count} <span className="font-normal text-slate-400">/ {required} per quiz</span>
+                        <span className="text-muted">Question Pool</span>
+                        <span className="font-bold text-ink">
+                          {count} <span className="font-normal text-muted">/ {required} per quiz</span>
                         </span>
                       </div>
-                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-line">
                         <div
                           className={`h-full transition-all ${
                             isReady ? 'bg-emerald-500' : count > 0 ? 'bg-amber-500' : 'bg-rose-400'
@@ -421,7 +421,7 @@ export default function Projects() {
                       <div className="mt-2 flex items-center justify-between text-[11px]">
                         <span
                           className={`flex items-center gap-1 font-semibold ${
-                            count === 0 ? 'text-rose-600' : isReady ? 'text-emerald-600' : 'text-amber-600'
+                            count === 0 ? 'text-rose-500' : isReady ? 'text-emerald-500' : 'text-amber-500'
                           }`}
                         >
                           {count === 0 ? (
@@ -437,8 +437,8 @@ export default function Projects() {
                           )}
                         </span>
                         {p.allowedOrigins && p.allowedOrigins.length > 0 && (
-                          <span className="text-slate-400" title={p.allowedOrigins.join(', ')}>
-                            🌐 {p.allowedOrigins.length} game client{p.allowedOrigins.length === 1 ? '' : 's'}
+                          <span className="text-muted" title={p.allowedOrigins.join(', ')}>
+                            🌐 {p.allowedOrigins.length} client{p.allowedOrigins.length === 1 ? '' : 's'}
                           </span>
                         )}
                       </div>
@@ -446,18 +446,18 @@ export default function Projects() {
                   </div>
 
                   {/* Actions Footer */}
-                  <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <div className="mt-5 pt-3 border-t border-line flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => setSimulatorTarget(p)}
-                        className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-indigo-500/20 hover:bg-indigo-700 transition-all hover:scale-105"
+                        className="flex items-center gap-1.5 rounded-xl bg-primary-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-primary-500/20 hover:bg-primary-700 transition-all hover:scale-105"
                       >
                         <Play size={12} className="fill-white" />
                         <span>Play Test</span>
                       </button>
                       <button
                         onClick={() => navigate(`/projects/${p._id}/questions`)}
-                        className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                        className="btn-secondary px-3 py-1.5 text-xs font-semibold"
                       >
                         <ListChecks size={13} />
                         <span>Questions</span>
@@ -523,8 +523,8 @@ export default function Projects() {
               <label
                 className={`flex cursor-pointer flex-col rounded-xl border p-3.5 transition-all ${
                   form.projectType === 'mcq'
-                    ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-500/20'
-                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                    ? 'border-primary-600 bg-primary-50/50 dark:bg-primary-950/30 ring-2 ring-primary-500/20'
+                    : 'border-line bg-panel hover:bg-surface'
                 }`}
               >
                 <input
@@ -535,15 +535,15 @@ export default function Projects() {
                   onChange={() => setForm({ ...form, projectType: 'mcq' })}
                   className="sr-only"
                 />
-                <span className="text-sm font-bold text-slate-900">MCQ Quiz</span>
-                <span className="mt-1 text-xs text-slate-500">Question with 4 options (A, B, C, D) + Correct Answer + Hint</span>
+                <span className="text-sm font-bold text-ink">MCQ Quiz</span>
+                <span className="mt-1 text-xs text-muted">Question with 4 options (A, B, C, D) + Correct Answer + Hint</span>
               </label>
 
               <label
                 className={`flex cursor-pointer flex-col rounded-xl border p-3.5 transition-all ${
                   form.projectType === 'classic'
-                    ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-500/20'
-                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                    ? 'border-primary-600 bg-primary-50/50 dark:bg-primary-950/30 ring-2 ring-primary-500/20'
+                    : 'border-line bg-panel hover:bg-surface'
                 }`}
               >
                 <input
@@ -554,8 +554,8 @@ export default function Projects() {
                   onChange={() => setForm({ ...form, projectType: 'classic' })}
                   className="sr-only"
                 />
-                <span className="text-sm font-bold text-slate-900">Classic Prompt / Answer</span>
-                <span className="mt-1 text-xs text-slate-500">Custom 3 fields (e.g. Word, Definition, Hint)</span>
+                <span className="text-sm font-bold text-ink">Classic Prompt / Answer</span>
+                <span className="mt-1 text-xs text-muted">Custom 3 fields (e.g. Word, Definition, Hint)</span>
               </label>
             </div>
           </div>

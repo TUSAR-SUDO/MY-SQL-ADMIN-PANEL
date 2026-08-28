@@ -1,10 +1,17 @@
 const prisma = require('../db');
 const { wrapAll } = require('../utils/asyncHandler');
+const sessionCache = require('../utils/cache');
 
 // @desc    List all available projects (for games to auto-detect)
 // @route   GET /api/public/projects
 // @access  Public
 const listProjects = async (req, res) => {
+  const cached = sessionCache.get('public_projects_list');
+  if (cached) {
+    res.setHeader('X-Cache', 'HIT');
+    return res.json(cached);
+  }
+
   const projects = await prisma.project.findMany({
     select: {
       id: true,
@@ -39,7 +46,10 @@ const listProjects = async (req, res) => {
       };
     })
   );
-  res.json({ projects: results });
+  const responseData = { projects: results };
+  sessionCache.set('public_projects_list', responseData, 60);
+  res.setHeader('X-Cache', 'MISS');
+  res.json(responseData);
 };
 
 // @desc    Get a quiz session for a game
@@ -48,6 +58,14 @@ const listProjects = async (req, res) => {
 const getSession = async (req, res) => {
   const { slug } = req.params;
   const { difficulty, category } = req.query;
+
+  const requestedLimit = Number(req.query.limit) || 15;
+  const cacheKey = `session_${slug.toLowerCase()}_${difficulty || 'all'}_${category || 'all'}_${requestedLimit}`;
+  const cached = sessionCache.get(cacheKey);
+  if (cached) {
+    res.setHeader('X-Cache', 'HIT');
+    return res.json(cached);
+  }
 
   const project = await prisma.project.findUnique({ where: { slug } });
   if (!project) {
@@ -144,7 +162,7 @@ const getSession = async (req, res) => {
     }
   }
 
-  res.json({
+  const responseData = {
     project: {
       name: project.name,
       slug: project.slug,
@@ -158,7 +176,11 @@ const getSession = async (req, res) => {
     mainQuestionField: project.mainQuestionField,
     totalAvailable: count,
     questions,
-  });
+  };
+
+  sessionCache.set(cacheKey, responseData, 30); // 30s in-memory cache
+  res.setHeader('X-Cache', 'MISS');
+  res.json(responseData);
 };
 
 module.exports = wrapAll({ listProjects, getSession });

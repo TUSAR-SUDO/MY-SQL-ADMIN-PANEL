@@ -1,5 +1,6 @@
-import { Menu } from 'lucide-react';
+import { Menu, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const roleLabels = {
   super_admin: 'Super admin',
@@ -8,9 +9,10 @@ const roleLabels = {
 
 const Topbar = ({ title, subtitle, eyebrow, onToggleSidebar }) => {
   const { admin } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-line bg-panel/80 px-4 backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-line bg-panel/80 px-4 backdrop-blur-md sm:px-6 transition-colors duration-300">
       <div className="flex min-w-0 items-center gap-3">
         <button
           onClick={onToggleSidebar}
@@ -31,6 +33,20 @@ const Topbar = ({ title, subtitle, eyebrow, onToggleSidebar }) => {
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-surface text-ink hover:border-primary-400 hover:text-primary-500 transition-all shadow-sm"
+          aria-label="Toggle theme"
+        >
+          {isDark ? (
+            <Sun size={17} className="text-amber-400 animate-fade-in" />
+          ) : (
+            <Moon size={17} className="text-indigo-600 animate-fade-in" />
+          )}
+        </button>
+
         <div className="hidden text-right sm:block">
           <p className="text-sm font-semibold text-ink">{admin?.name || 'Admin'}</p>
           <p className="text-xs text-muted">{roleLabels[admin?.role] || admin?.email || ''}</p>

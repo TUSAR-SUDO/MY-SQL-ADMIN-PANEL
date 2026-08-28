@@ -2,6 +2,7 @@ const csv = require('csv-parse');
 const mammoth = require('mammoth');
 const prisma = require('../db');
 const { wrapAll } = require('../utils/asyncHandler');
+const sessionCache = require('../utils/cache');
 
 // Helper: map a DB question row to the API response shape
 const questionToResponse = (q) => ({
@@ -100,6 +101,7 @@ const addQuestion = async (req, res) => {
       category: String(category || '').trim(),
     },
   });
+  sessionCache.invalidateSlug(project.slug);
   res.status(201).json(questionToResponse(question));
 };
 
@@ -107,7 +109,10 @@ const addQuestion = async (req, res) => {
 // @route   PUT /api/questions/:id
 // @access  Private
 const updateQuestion = async (req, res) => {
-  const question = await prisma.question.findUnique({ where: { id: Number(req.params.id) } });
+  const question = await prisma.question.findUnique({
+    where: { id: Number(req.params.id) },
+    include: { project: true },
+  });
   if (!question) {
     return res.status(404).json({ message: 'Question not found' });
   }
@@ -139,6 +144,9 @@ const updateQuestion = async (req, res) => {
     where: { id: question.id },
     data: updateData,
   });
+  if (question.project) {
+    sessionCache.invalidateSlug(question.project.slug);
+  }
   res.json(questionToResponse(updated));
 };
 
@@ -146,11 +154,17 @@ const updateQuestion = async (req, res) => {
 // @route   DELETE /api/questions/:id
 // @access  Private
 const deleteQuestion = async (req, res) => {
-  const question = await prisma.question.findUnique({ where: { id: Number(req.params.id) } });
+  const question = await prisma.question.findUnique({
+    where: { id: Number(req.params.id) },
+    include: { project: true },
+  });
   if (!question) {
     return res.status(404).json({ message: 'Question not found' });
   }
   await prisma.question.delete({ where: { id: question.id } });
+  if (question.project) {
+    sessionCache.invalidateSlug(question.project.slug);
+  }
   res.json({ message: 'Question removed' });
 };
 
@@ -480,6 +494,10 @@ const bulkDeleteQuestions = async (req, res) => {
       id: { in: numericIds },
     },
   });
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (project) {
+    sessionCache.invalidateSlug(project.slug);
+  }
   res.json({ message: `Removed ${result.count} questions`, count: result.count });
 };
 
@@ -639,6 +657,7 @@ const seedSampleQuestions = async (req, res) => {
   }));
 
   const inserted = await prisma.question.createMany({ data: docs });
+  sessionCache.invalidateSlug(project.slug);
   res.status(201).json({ message: `Seeded ${inserted.count} sample questions`, count: inserted.count });
 };
 
@@ -739,7 +758,6 @@ Do not wrap in markdown or backticks. Return raw JSON array only.`;
     try {
       parsedQuestions = JSON.parse(candidateText);
     } catch {
-      // In case wrapped in markdown
       const cleaned = candidateText.replace(/```json/gi, '').replace(/```/g, '').trim();
       parsedQuestions = JSON.parse(cleaned);
     }
@@ -770,6 +788,7 @@ Do not wrap in markdown or backticks. Return raw JSON array only.`;
     }
 
     const inserted = await prisma.question.createMany({ data: docs });
+    sessionCache.invalidateSlug(project.slug);
     res.status(201).json({
       message: `AI generated and saved ${inserted.count} questions to MySQL`,
       count: inserted.count,
